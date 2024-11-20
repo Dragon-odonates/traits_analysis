@@ -4,4 +4,4 @@ This repository contains the code to run trait analyses on odonates (but does no
 
 To see the analyses outputs, go to:
 
-- [Multivariate analyses](https://dragon-odonates.github.io/traits_analysis/traits_analysis.html)
+- [Multivariate analyses (code/traits_analysis.html)](https://htmlpreview.github.io/?https://github.com/Dragon-odonates/traits_analysis/blob/main/code/traits_analysis.html)
