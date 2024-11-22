@@ -26,12 +26,12 @@ library(here)
 
 ```{r}
 datlist <- list()
-for(i in 1:5) {
+for(i in 1:6) {
   datlist[[i]] <- read_excel(here(file.path("data", 
-                                            "OdonDatabase_life_hist_traits.xlsx")),
+                                            "OdonDatabase_life hist traits.xlsx")),
                                sheet = i)
 }
-names(datlist) <- c("taxonomy", "trend", "thermal", "imago", "exuviae")
+names(datlist) <- c("taxonomy", "trend", "thermal", "imago", "exuviae", "flight")
 ```
 
 ## Merge data
@@ -44,8 +44,6 @@ datlist$imago <- datlist$imago[, 1:(ncol(datlist$imago)-2)]
 # Remove stars
 datlist$imago$Species_name <- str_remove_all(datlist$imago$Species_name, 
                                              pattern = "\\*")
-datlist$exuviae$Species_name <- str_remove_all(datlist$exuviae$Species_name, 
-                                               pattern = "\\*")
 
 # Remove leading and trailing spaces
 datlist <- lapply(datlist, 
@@ -81,23 +79,18 @@ df[df == "NA"] <- NA
 
 df$Population_trend[df$Population_trend == "Unknown"] <- NA
 
-# # To check
-# df <- df |> 
-#   mutate(Exuvia_Body_length = ifelse(Exuvia_Body_length == "Not relevant", 
-#                                      Exuvia_Tot_length, Exuvia_Body_length))
-# df <- df |> 
-#   mutate(Exuvia_Caudal_lamellae_length = ifelse(Exuvia_Caudal_lamellae_length == "Not relevant", 
-#                                      Exuvia_Tot_length, Exuvia_Caudal_lamellae_length))
+df[df == "Not relevant"] <- "NaN"
+
+# Remove the "source" columns
+
+df <- df[, grep("_Source", colnames(df), invert = TRUE)]
 ```
 
 ```{r}
-# column types
-# df$Body_size_Min <- as.numeric(df$Body_size_Min)
-# df$Abdomen_length_Min <- as.numeric(df$Abdomen_length_Min)
-
 df <- df |> 
   mutate(across(ends_with("voltine"),
                 as.numeric))
+
 df <- df |> mutate(across(starts_with("Exuvia"), 
                           as.numeric))
 df <- df |> mutate(across(where(is.character), factor))
@@ -112,6 +105,10 @@ df$Population_trend <- factor(df$Population_trend,
 
 df$Overwintering_stage <- factor(df$Overwintering_stage,
                                  levels = c("egg", "egg/larva", "larva", "adult"), 
+                                 ordered = TRUE)
+
+df$Coloration_class <- factor(df$Coloration_class,
+                                 levels = c("pale", "intermediate", "dark"), 
                                  ordered = TRUE)
 ```
 
@@ -133,9 +130,8 @@ df$Partivoltine[df$Partivoltine > 1 & !is.na(df$Partivoltine)] <- 1
 df$Bivoltine[df$Bivoltine > 1 & !is.na(df$Bivoltine)] <- 1
 ```
 
-## Multivariate analyses
 
-### Body size
+## Body size multivariate analysis
 
 ```{r}
 df_size <- df |> 
@@ -166,7 +162,9 @@ pca_size$eig/sum(pca_size$eig) # First axis explains 91 %
 
 
 ```{r}
-body_size <- -pca_size$li[, 1]
+body_size <- -pca_size$li[, 1] # invert axes so that bigger scores correspond to larger odonates
+
+# Select species subset for which size is avaliable
 ind_sp_not_na <- match(rownames(df_size_mvar), df$short_names)
 sp_not_na <- df$Species_name[ind_sp_not_na]
 
@@ -181,25 +179,34 @@ df_body_size <- df |>
 ```
 
 
-### Other traits
+## Odonata trait space
 
 ```{r}
-df_relevant <- df_body_size |> 
-  mutate(body_size_mean = (as.numeric(Body_size_Min) + as.numeric(Body_size_Max))/2,
-         wing_length_mean = (Hind_wing_Min + Hind_wing_Max)/2) |> 
-  mutate(dispersal = wing_length_mean/body_size_mean)
+# Rename STI and SD
+df_body_size <- df_body_size |> 
+  rename("Temp_mean" = "STI",
+         "Temp_sd" = "SD")
+```
 
-df_relevant <- df_relevant |> 
+```{r}
+# # Add dispersal
+# df_relevant <- df_body_size |> 
+#   mutate(body_size_mean = (as.numeric(Body_size_Min) + as.numeric(Body_size_Max))/2,
+#          wing_length_mean = (Hind_wing_Min + Hind_wing_Max)/2) |> 
+#   mutate(dispersal = wing_length_mean/body_size_mean)
+
+df_relevant <- df_body_size |> 
   select(body_size, 
-         dispersal,
+         # dispersal,
          habitattype, 
-         STI, SD, # to update + an aridity index will be added
-         Coloration_M, # Could be redefined as a gradient (light -> dark)
+         Temp_mean, Temp_sd, # to update + an aridity index will be added
+         Coloration_class,
          ends_with("voltine"),
          Perchers_and_fliers,
          Overwintering_stage,
          Larval_strategy, 
-         Oviposition_substrate) # add average latitude + sd
+         Oviposition_substrate)
+# add average latitude + sd
 # dispersion index could be good -> computed with wing length and body mass
 ```
 
@@ -241,32 +248,20 @@ df_mvar$voltinism <- factor(df_mvar$voltinism,
 ```
 
 ```{r}
-levels(df_mvar$habitattype)
+# levels(df_mvar$habitattype)
 
 # recode habitat
 habitat <- as.character(df_mvar$habitattype)
 habitat[habitat == "southern Streams and rivers"] <- "streams and rivers"
 habitat[habitat == "Streams and rivers"] <- "streams and rivers"
 
+# Shorter names
+habitat[habitat == "streams and rivers"] <- "streams"
+habitat[habitat == "temporary waters"] <- "temporary"
+
+
 df_mvar$habitattype <- factor(habitat)
-```
-
-```{r}
-levels(df_mvar$Coloration_M)
-
-# recode coloration
-darkness <- as.character(df_mvar$Coloration_M)
-
-# Correct Y/y
-darkness[darkness == "yellow/black"] <- "Yellow/black"
-unique(darkness)
-
-# Ordered colorkey
-colorkey <- c("Dark/Black", "Azure blue/black", "Metallic green/blue", "Yellow/black", "Brownish", "Green/Yellow", "Gray-blue", "Red")
-
-# Recode color
-darkness <- match(darkness, colorkey)
-df_mvar$Coloration_M <- darkness
+# levels(df_mvar$habitattype)
 ```
 
 
@@ -276,6 +271,12 @@ rownames(df_mvar) <- df$short_names
 
 # NA
 df_mvar <- na.omit(df_mvar)
+
+# Rename rows
+colnames(df_mvar) <- c("body_size", "habitat", "tmean",
+                       "tsd", "color", "voltinism",
+                       "adult_behavior", "winter", 
+                       "larva_behavior", "oviposition")
 ```
 
 ```{r}
@@ -288,10 +289,11 @@ ggplot() +
 ```
 
 ```{r}
-s.corcircle(mvar$c1/max(mvar$c1$CS1))
+s.corcircle(mvar$c1)
 
 s.label(mvar$li)
-s.label(mvar$li, labels = rownames(df_mvar))
+s.label(mvar$li, 
+        labels = rownames(df_mvar))
 ```
 
 ```{r}
@@ -301,7 +303,11 @@ df_fac <- df[ind, ]
 
 ```{r}
 s.class(mvar$li, 
-        fac = df_fac$Family)
+        fac = df_fac$Family,
+        col = brewer.pal(12, "Set3"))
+```
+
+```{r}
 s.class(mvar$li, 
         fac = df_fac$ERL_2024_category,
         col = brewer.pal(4, "PuOr"))
@@ -310,11 +316,12 @@ s.class(mvar$li,
         col = brewer.pal(3, "PuOr"))
 ```
 
-### Discriminant analysis
+## Discriminant analysis on conservation status
 
 ```{r}
 discri <- discrimin(mvar, 
-                    fac = factor(df_fac$ERL_2024_category, ordered = FALSE),
+                    fac = factor(df_fac$ERL_2024_category, 
+                                 ordered = FALSE),
                     scannf = FALSE, nf = 3)
 ```
 
@@ -322,8 +329,8 @@ discri <- discrimin(mvar,
 s.label(discri$li)
 s.label(discri$li, labels = rownames(df_mvar))
 
-s.corcircle(discri$fa*0.5)
-s.corcircle(discri$gc*0.7, 
+s.corcircle(discri$fa)
+s.corcircle(discri$gc*0.8, 
             plabels.col = "darkred", 
             plines.col = "darkred", add = TRUE)
 
@@ -332,3 +339,23 @@ s.class(discri$li,
         col = brewer.pal(4, "PuOr"))
 ```
 
+```{r}
+discri <- discrimin(mvar, 
+                    fac = factor(df_fac$Population_trend, 
+                                 ordered = FALSE),
+                    scannf = FALSE, nf = 3)
+```
+
+```{r}
+s.label(discri$li)
+s.label(discri$li, labels = rownames(df_mvar))
+
+s.corcircle(discri$fa)
+s.corcircle(discri$gc*0.8, 
+            plabels.col = "darkred", 
+            plines.col = "darkred", add = TRUE)
+
+s.class(discri$li,
+        fac = factor(df_fac$Population_trend, ordered = FALSE),
+        col = brewer.pal(3, "PuOr"))
+```
