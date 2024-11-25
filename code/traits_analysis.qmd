@@ -5,6 +5,8 @@ editor: source
 embed-resources: true
 toc: true
 toc-depth: 3
+params:
+  ordfac: TRUE
 ---
 
 ```{r}
@@ -34,7 +36,9 @@ for(i in 1:6) {
 names(datlist) <- c("taxonomy", "trend", "thermal", "imago", "exuviae", "flight")
 ```
 
-## Merge data
+## Prepare data
+
+### Merge data
 
 ```{r}
 # Remove empty columns
@@ -55,21 +59,21 @@ datlist <- lapply(datlist,
 
 ```{r}
 # Merge
-df_all <- Reduce(function(...) merge(..., by = 'Species_name', 
+df_raw <- Reduce(function(...) merge(..., by = 'Species_name', 
                                      all.x = TRUE), datlist)
 ```
 
-## Prepare data
+### Format data
 
 ```{r}
 # Rename columns
-new_colnames <- str_replace(colnames(df_all), " - ", "_")
+new_colnames <- str_replace(colnames(df_raw), " - ", "_")
 new_colnames <- str_replace_all(new_colnames, " ", "_")
 new_colnames <- str_replace_all(new_colnames, "\\.", "_")
 new_colnames <- str_replace_all(new_colnames, "\\&", "and")
 new_colnames <- str_replace_all(new_colnames, "\\(|\\)", "")
 
-df <- df_all
+df <- df_raw
 colnames(df) <- new_colnames
 ```
 
@@ -82,7 +86,6 @@ df$Population_trend[df$Population_trend == "Unknown"] <- NA
 df[df == "Not relevant"] <- "NaN"
 
 # Remove the "source" columns
-
 df <- df[, grep("_Source", colnames(df), invert = TRUE)]
 ```
 
@@ -96,20 +99,19 @@ df <- df |> mutate(across(starts_with("Exuvia"),
 df <- df |> mutate(across(where(is.character), factor))
 
 df$ERL_2024_category <- factor(df$ERL_2024_category,
-                               levels = c("LC", "NT", "VU", "EN", "CR"), 
-                               ordered = TRUE)
+                               levels = c("LC", "NT", "VU", "EN", "CR"))
 
 df$Population_trend <- factor(df$Population_trend,
                               levels = c("Decreasing", "Stable", "Increasing"), 
-                              ordered = TRUE)
+                              ordered = params$ordfac)
 
 df$Overwintering_stage <- factor(df$Overwintering_stage,
                                  levels = c("egg", "egg/larva", "larva", "adult"), 
-                                 ordered = TRUE)
+                                 ordered = params$ordfac)
 
 df$Coloration_class <- factor(df$Coloration_class,
                                  levels = c("pale", "intermediate", "dark"), 
-                                 ordered = TRUE)
+                                 ordered = params$ordfac)
 ```
 
 ```{r}
@@ -151,7 +153,7 @@ df_size_mvar <- na.omit(df_size)
 ```{r}
 pca_size <- dudi.pca(df_size_mvar, scannf = FALSE, nf = 3)
 
-s.corcircle(pca_size$c1)
+s.corcircle(pca_size$c1, plabels.boxes.draw = FALSE)
 s.label(pca_size$li)
 ```
 
@@ -168,38 +170,26 @@ body_size <- -pca_size$li[, 1] # invert axes so that bigger scores correspond to
 ind_sp_not_na <- match(rownames(df_size_mvar), df$short_names)
 sp_not_na <- df$Species_name[ind_sp_not_na]
 
-body_size_df <- data.frame(Species_name = sp_not_na,
-                           body_size = body_size)
+size_names_df <- data.frame(Species_name = sp_not_na,
+                            body_size = body_size)
 ```
 
 ```{r}
 # Add body size to df
 df_body_size <- df |> 
-  left_join(body_size_df, by = "Species_name")
+  left_join(size_names_df, by = "Species_name")
 ```
 
 
 ## Odonata trait space
 
-```{r}
-# Rename STI and SD
-df_body_size <- df_body_size |> 
-  rename("Temp_mean" = "STI",
-         "Temp_sd" = "SD")
-```
+### Prepare data
 
 ```{r}
-# # Add dispersal
-# df_relevant <- df_body_size |> 
-#   mutate(body_size_mean = (as.numeric(Body_size_Min) + as.numeric(Body_size_Max))/2,
-#          wing_length_mean = (Hind_wing_Min + Hind_wing_Max)/2) |> 
-#   mutate(dispersal = wing_length_mean/body_size_mean)
-
 df_relevant <- df_body_size |> 
   select(body_size, 
-         # dispersal,
          habitattype, 
-         Temp_mean, Temp_sd, # to update + an aridity index will be added
+         STI, SD, # to update + an aridity index will be added
          Coloration_class,
          ends_with("voltine"),
          Perchers_and_fliers,
@@ -207,7 +197,7 @@ df_relevant <- df_body_size |>
          Larval_strategy, 
          Oviposition_substrate)
 # add average latitude + sd
-# dispersion index could be good -> computed with wing length and body mass
+# dispersion index could be good
 ```
 
 ```{r}
@@ -226,6 +216,7 @@ df_mvar <- df_mvar |>
          .before = "Partivoltine") |> 
   select(-(ends_with("voltine")))
 
+# Remove zeroes
 df_mvar$voltinism <- str_remove_all(df_mvar$voltinism, "-*0-*")
 
 # Simplification
@@ -233,6 +224,8 @@ df_mvar$voltinism <- str_remove_all(df_mvar$voltinism, "-*NA-*")
 
 # NA recoding
 df_mvar$voltinism[df_mvar$voltinism == ""] <- NA
+
+unique(df_mvar$voltinism)
 
 df_mvar$voltinism <- factor(df_mvar$voltinism,
                             levels = c("Partivoltine",
@@ -244,7 +237,7 @@ df_mvar$voltinism <- factor(df_mvar$voltinism,
                                        "Univoltine",
                                        "Univoltine-Bivoltine",
                                        "Bivoltine"),
-                            ordered = TRUE)
+                            ordered = params$ordfac)
 ```
 
 ```{r}
@@ -257,7 +250,7 @@ habitat[habitat == "Streams and rivers"] <- "streams and rivers"
 
 # Shorter names
 habitat[habitat == "streams and rivers"] <- "streams"
-habitat[habitat == "temporary waters"] <- "temporary"
+habitat[habitat == "temporary waters"] <- "temp_water"
 
 
 df_mvar$habitattype <- factor(habitat)
@@ -273,14 +266,26 @@ rownames(df_mvar) <- df$short_names
 df_mvar <- na.omit(df_mvar)
 
 # Rename rows
-colnames(df_mvar) <- c("body_size", "habitat", "tmean",
-                       "tsd", "color", "voltinism",
-                       "adult_behavior", "winter", 
-                       "larva_behavior", "oviposition")
+colnames(df_mvar) <- c("body_size", "habitat", 
+                       "tmean", "tsd", 
+                       "color", "voltinism",
+                       "behavior", "winter", 
+                       "larva_strat", "oviposition")
 ```
 
+
+### Perform analysis
+
 ```{r}
-mvar <- dudi.mix(df_mvar, nf = 3, scannf = FALSE)
+if (params$ordfac) {
+  # Mix (extended Hill-Smith) with ordered factors
+  mvar <- dudi.mix(df_mvar, nf = 3,
+                   scannf = FALSE)
+} else {
+  # Hill-Smith with unordered factors
+  mvar <- dudi.hillsmith(df_mvar, nf = 3, 
+                         scannf = FALSE)
+}
 ```
 
 ```{r}
@@ -289,11 +294,25 @@ ggplot() +
 ```
 
 ```{r}
-s.corcircle(mvar$c1)
+s.corcircle(mvar$c1, 
+            plabels.boxes.draw = FALSE)
 
-s.label(mvar$li)
-s.label(mvar$li, 
-        labels = rownames(df_mvar))
+corvar <- mvar$cr
+corvar <- data.frame(corvar)
+corvar$names <- rownames(mvar$cr)
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(names, RS1), 
+               y = RS1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+s.label(mvar$li,
+        plabels.cex = 0)
+s.label(mvar$li,
+        plabels.optim = TRUE)
 ```
 
 ```{r}
@@ -302,60 +321,153 @@ df_fac <- df[ind, ]
 ```
 
 ```{r}
+nfam <- length(levels(df_fac$Family))
+pal_fam <- colorRampPalette( brewer.pal(8, "Dark2") )(nfam)
 s.class(mvar$li, 
         fac = df_fac$Family,
-        col = brewer.pal(12, "Set3"))
+        col = pal_fam)
+
+ngen <- length(levels(df_fac$Genus))
+pal_gen <- colorRampPalette( brewer.pal(8, "Dark2") )(ngen)
+s.class(mvar$li, 
+        fac = df_fac$Genus,
+        plabels.cex = 0.7,
+        col = pal_gen)
+
+s.class(mvar$li, 
+        fac = df_mvar$habitat,
+        col = brewer.pal(length(levels(df_mvar$habitat)), "Dark2"))
 ```
 
 ```{r}
+col_redlist <- c("darkolivegreen1", "orange",
+                 "brown3", "darkorchid4")
+col_trend <- c("brown4", "pink", "cornflowerblue")
+
 s.class(mvar$li, 
         fac = df_fac$ERL_2024_category,
-        col = brewer.pal(4, "PuOr"))
+        col = col_redlist)
 s.class(mvar$li, 
         fac = df_fac$Population_trend,
-        col = brewer.pal(3, "PuOr"))
+        col = col_trend)
 ```
 
 ## Discriminant analysis on conservation status
 
+### Red list category
+
 ```{r}
 discri <- discrimin(mvar, 
-                    fac = factor(df_fac$ERL_2024_category, 
-                                 ordered = FALSE),
+                    fac = factor(df_fac$ERL_2024_category),
                     scannf = FALSE, nf = 3)
 ```
 
 ```{r}
-s.label(discri$li)
-s.label(discri$li, labels = rownames(df_mvar))
+s.label(discri$li, plabels.cex = 0)
+s.label(discri$li, 
+        labels = rownames(df_mvar),
+        plabels.optim = TRUE)
+s.class(discri$li, 
+        fac = df_fac$Family,
+        col = pal_fam)
+```
 
-s.corcircle(discri$fa)
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
+```
+
+
+```{r}
+s.corcircle(discri$fa, 
+            plabels.boxes.draw = FALSE)
 s.corcircle(discri$gc*0.8, 
             plabels.col = "darkred", 
             plines.col = "darkred", add = TRUE)
 
-s.class(discri$li,
-        fac = factor(df_fac$ERL_2024_category, ordered = FALSE),
-        col = brewer.pal(4, "PuOr"))
+corvar <- data.frame(discri$fa)
+corvar$names <- rownames(discri$fa)
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(names, DS1), 
+               y = DS1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ```{r}
+s.class(discri$li,
+        fac = df_fac$ERL_2024_category,
+        col = col_redlist)
+```
+
+
+```{r}
+s.image(discri$li,
+        df_fac$AOO_Europe)
+s.label(discri$li,
+        plabels.cex = 0,
+        add = TRUE)
+
+s.class(discri$li,
+        fac = df_mvar$habitat,
+        col = brewer.pal(5, "Dark2"))
+```
+
+
+### Trend
+
+```{r}
 discri <- discrimin(mvar, 
-                    fac = factor(df_fac$Population_trend, 
-                                 ordered = FALSE),
+                    fac = factor(df_fac$Population_trend),
                     scannf = FALSE, nf = 3)
 ```
 
 ```{r}
-s.label(discri$li)
-s.label(discri$li, labels = rownames(df_mvar))
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
+```
 
-s.corcircle(discri$fa)
+```{r}
+s.label(discri$li, plabels.cex = 0)
+s.label(discri$li, 
+        labels = rownames(df_mvar),
+        plabels.optim = TRUE)
+s.class(discri$li, 
+        fac = df_fac$Family,
+        col = pal_fam)
+```
+
+```{r}
+s.corcircle(discri$fa, 
+            plabels.boxes.draw = FALSE)
 s.corcircle(discri$gc*0.8, 
             plabels.col = "darkred", 
             plines.col = "darkred", add = TRUE)
 
+corvar <- discri$fa
+corvar <- data.frame(corvar)
+corvar$names <- rownames(discri$fa)
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(names, DS1), 
+               y = DS1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
 s.class(discri$li,
-        fac = factor(df_fac$Population_trend, ordered = FALSE),
-        col = brewer.pal(3, "PuOr"))
+        fac = df_fac$Population_trend,
+        col = col_trend)
+```
+
+```{r}
+s.image(discri$li,
+        df_fac$AOO_Europe)
+s.label(discri$li,
+        plabels.cex = 0,
+        add = TRUE)
+
+s.class(discri$li,
+        fac = df_mvar$habitat,
+        col = brewer.pal(5, "Dark2"))
 ```
