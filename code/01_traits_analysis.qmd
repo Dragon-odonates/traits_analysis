@@ -5,8 +5,9 @@ editor: source
 embed-resources: true
 toc: true
 toc-depth: 3
+code-fold: true
 params:
-  ordfac: TRUE
+  ordfac: FALSE
 ---
 
 ```{r}
@@ -90,6 +91,45 @@ df <- df[, grep("_Source", colnames(df), invert = TRUE)]
 ```
 
 ```{r}
+# Add suborder
+Suborder_vec <- c(rep("Zygoptera", 5), rep("Anisoptera", 7))
+names(Suborder_vec) <- c("Calopterygidae", "Lestidae", "Coenagrionidae",
+                         "Platycnemidae", "Epallagidae",
+                         "Aeshnidae", "Gomphidae", "Cordulegastridae",
+                         "Macromiidae", "Corduliidae", "Libellulidae", "Syntemistidae")
+
+df <- df |> 
+  mutate(Suborder = Suborder_vec[Family], .before = "Family")
+
+# Add Endangered/Least concern
+Conservation_vec <- c(rep("Least Concern", 2), 
+                      rep("Endangered", 3), "Data Deficient")
+names(Conservation_vec) <- c("LC", "NT", "VU", "EN", "CR", "DD")
+df <- df |> 
+  mutate(Conservation =  Conservation_vec[ERL_2024_category], 
+         .before = "ERL_2024_category")
+
+```
+
+```{r}
+# Recode flight period
+start_months <- 1:12
+names(start_months) <- c("January", "February", "March", "April",
+                         "May", "June", "July", "August",
+                         "September", "October", "November",
+                         "December")
+
+df <- df |> 
+  mutate(start_main_flight_period = start_months[start_main_flight_period]) |> 
+  mutate(end_main_flight_period = start_months[end_main_flight_period]) |> 
+  mutate(flight_period_length = end_main_flight_period - start_main_flight_period + 1)
+
+if (any(df$flight_period_length < 0, na.rm = TRUE)) {
+  warning("Flight length < 0 for some species")
+}
+```
+
+```{r}
 df <- df |> 
   mutate(across(ends_with("voltine"),
                 as.numeric))
@@ -99,7 +139,7 @@ df <- df |> mutate(across(starts_with("Exuvia"),
 df <- df |> mutate(across(where(is.character), factor))
 
 df$ERL_2024_category <- factor(df$ERL_2024_category,
-                               levels = c("LC", "NT", "VU", "EN", "CR"))
+                               levels = c("LC", "NT", "VU", "EN", "CR", "DD"))
 
 df$Population_trend <- factor(df$Population_trend,
                               levels = c("Decreasing", "Stable", "Increasing"), 
@@ -131,7 +171,6 @@ df <- df |>
 df$Partivoltine[df$Partivoltine > 1 & !is.na(df$Partivoltine)] <- 1
 df$Bivoltine[df$Bivoltine > 1 & !is.na(df$Bivoltine)] <- 1
 ```
-
 
 ## Body size multivariate analysis
 
@@ -190,6 +229,8 @@ df_relevant <- df_body_size |>
   select(body_size, 
          habitattype, 
          STI, SD, # to update + an aridity index will be added
+         start_main_flight_period, 
+         flight_period_length,
          Coloration_class,
          ends_with("voltine"),
          Perchers_and_fliers,
@@ -245,18 +286,21 @@ df_mvar$voltinism <- factor(df_mvar$voltinism,
 
 # recode habitat
 habitat <- as.character(df_mvar$habitattype)
-habitat[habitat == "southern Streams and rivers"] <- "streams and rivers"
+# habitat[habitat == "southern Streams and rivers"] <- "streams and rivers"
 habitat[habitat == "Streams and rivers"] <- "streams and rivers"
 
 # Shorter names
 habitat[habitat == "streams and rivers"] <- "streams"
 habitat[habitat == "temporary waters"] <- "temp_water"
-
+habitat[habitat == "southern Streams and rivers"] <- "southern_streams"
 
 df_mvar$habitattype <- factor(habitat)
 # levels(df_mvar$habitattype)
 ```
 
+```{r}
+unique(df_mvar$start_main_flight_period)
+```
 
 ```{r}
 # Row names
@@ -268,11 +312,25 @@ df_mvar <- na.omit(df_mvar)
 # Rename rows
 colnames(df_mvar) <- c("body_size", "habitat", 
                        "tmean", "tsd", 
+                       "flight_start", "flight_length",
                        "color", "voltinism",
                        "behavior", "winter", 
                        "larva_strat", "oviposition")
 ```
 
+
+```{r}
+# # Check normality of numeric columns
+# df_num <- df_mvar |> 
+#   select(where(is.numeric))
+# 
+# ggplot(df_num) +
+#   geom_density(aes(x = body_size))
+# ggplot(df_num) +
+#   geom_density(aes(x = tsd))
+# ggplot(df_num) +
+#   geom_density(aes(x = tmean))
+```
 
 ### Perform analysis
 
@@ -312,15 +370,23 @@ ggplot(corvar) +
 s.label(mvar$li,
         plabels.cex = 0)
 s.label(mvar$li,
+        labels = rownames(df_mvar),
+        plabels.col = "darkgrey",
         plabels.optim = TRUE)
 ```
 
 ```{r}
+# Select the rows of the full dataframe present in the analysis
 ind <- na.omit(match(rownames(df_mvar), df$short_names))
 df_fac <- df[ind, ]
 ```
 
 ```{r}
+# Taxonomic classes
+s.class(mvar$li,
+        fac = df_fac$Suborder,
+        col = c("darkorange", "cornflowerblue"))
+
 nfam <- length(levels(df_fac$Family))
 pal_fam <- colorRampPalette( brewer.pal(8, "Dark2") )(nfam)
 s.class(mvar$li, 
@@ -333,17 +399,17 @@ s.class(mvar$li,
         fac = df_fac$Genus,
         plabels.cex = 0.7,
         col = pal_gen)
-
-s.class(mvar$li, 
-        fac = df_mvar$habitat,
-        col = brewer.pal(length(levels(df_mvar$habitat)), "Dark2"))
 ```
 
 ```{r}
+col_conservation <- c("darkolivegreen1", "darkorchid4")
 col_redlist <- c("darkolivegreen1", "orange",
                  "brown3", "darkorchid4")
 col_trend <- c("brown4", "pink", "cornflowerblue")
 
+s.class(mvar$li, 
+        fac = df_fac$Conservation,
+        col = col_conservation)
 s.class(mvar$li, 
         fac = df_fac$ERL_2024_category,
         col = col_redlist)
@@ -366,38 +432,44 @@ discri <- discrimin(mvar,
 s.label(discri$li, plabels.cex = 0)
 s.label(discri$li, 
         labels = rownames(df_mvar),
+        plabels.col = "darkgrey",
         plabels.optim = TRUE)
+
 s.class(discri$li, 
         fac = df_fac$Family,
         col = pal_fam)
 ```
 
 ```{r}
-sum(discri$eig)/sum(mvar$eig)
-rtest(discri, nrepet = 999)
+s.corcircle(discri$va, 
+            plabels.boxes.draw = FALSE)
+# s.corcircle(discri$gc*0.8, 
+#             plabels.col = "darkred", 
+#             plines.col = "darkred", add = TRUE)
+
+corvar <- data.frame(discri$va)
+corvar$names <- rownames(discri$va)
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(names, CS1), 
+               y = CS1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
 ```{r}
-s.corcircle(discri$fa, 
-            plabels.boxes.draw = FALSE)
-s.corcircle(discri$gc*0.8, 
-            plabels.col = "darkred", 
-            plines.col = "darkred", add = TRUE)
-
-corvar <- data.frame(discri$fa)
-corvar$names <- rownames(discri$fa)
-
-ggplot(corvar) +
-  geom_point(aes(x = reorder(names, DS1), 
-               y = DS1)) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+s.corcircle(discri$cp[1:3, ])
 ```
 
 ```{r}
 s.class(discri$li,
         fac = df_fac$ERL_2024_category,
         col = col_redlist)
+```
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
 ```
 
 
@@ -410,9 +482,46 @@ s.label(discri$li,
 
 s.class(discri$li,
         fac = df_mvar$habitat,
-        col = brewer.pal(5, "Dark2"))
+        col = brewer.pal(6, "Dark2"))
 ```
 
+
+### Conservation status
+
+```{r}
+discri <- discrimin(mvar, 
+                    fac = factor(df_fac$Conservation),
+                    scannf = FALSE, nf = 1)
+```
+
+
+```{r}
+corvar <- data.frame(discri$va)
+corvar$names <- rownames(discri$va)
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(names, CS1), 
+               y = CS1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+s1d.class(score = discri$li, 
+          fac = factor(df_fac$Conservation),
+          col = rev(col_conservation))
+```
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
+```
+
+
+```{r}
+s1d.class(discri$li,
+        fac = df_mvar$habitat,
+        col = brewer.pal(6, "Dark2"))
+```
 
 ### Trend
 
@@ -422,15 +531,12 @@ discri <- discrimin(mvar,
                     scannf = FALSE, nf = 3)
 ```
 
-```{r}
-sum(discri$eig)/sum(mvar$eig)
-rtest(discri, nrepet = 999)
-```
 
 ```{r}
 s.label(discri$li, plabels.cex = 0)
 s.label(discri$li, 
         labels = rownames(df_mvar),
+        plabels.col = "darkgrey",
         plabels.optim = TRUE)
 s.class(discri$li, 
         fac = df_fac$Family,
@@ -438,26 +544,36 @@ s.class(discri$li,
 ```
 
 ```{r}
-s.corcircle(discri$fa, 
+s.corcircle(discri$va, 
             plabels.boxes.draw = FALSE)
-s.corcircle(discri$gc*0.8, 
-            plabels.col = "darkred", 
-            plines.col = "darkred", add = TRUE)
+# s.corcircle(discri$gc*0.8, 
+#             plabels.col = "darkred", 
+#             plines.col = "darkred", add = TRUE)
 
-corvar <- discri$fa
+corvar <- discri$va
 corvar <- data.frame(corvar)
-corvar$names <- rownames(discri$fa)
+corvar$names <- rownames(discri$va)
 
 ggplot(corvar) +
-  geom_point(aes(x = reorder(names, DS1), 
-               y = DS1)) +
+  geom_point(aes(x = reorder(names, CS1), 
+               y = CS1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+s.corcircle(discri$cp[1:3, ])
 ```
 
 ```{r}
 s.class(discri$li,
         fac = df_fac$Population_trend,
         col = col_trend)
+```
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
 ```
 
 ```{r}
@@ -469,5 +585,5 @@ s.label(discri$li,
 
 s.class(discri$li,
         fac = df_mvar$habitat,
-        col = brewer.pal(5, "Dark2"))
+        col = brewer.pal(6, "Dark2"))
 ```
