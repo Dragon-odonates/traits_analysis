@@ -216,9 +216,8 @@ size_names_df <- data.frame(Species_name = sp_not_na,
 ```{r}
 # Add body size to df
 df_body_size <- df |> 
-  left_join(size_names_df, by = "Species_name")
+  left_join(size_names_df, by = "Species_name") 
 ```
-
 
 ## Odonata trait space
 
@@ -317,6 +316,7 @@ colnames(df_mvar) <- c("body_size", "habitat",
                        "behavior", "winter", 
                        "larva_strat", "oviposition")
 ```
+
 
 
 ```{r}
