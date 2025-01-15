@@ -1,0 +1,453 @@
+---
+title: "Traits-conservation relationships"
+format: html
+editor: source
+embed-resources: true
+toc: true
+toc-depth: 3
+code-fold: true
+---
+
+```{r}
+library(ade4)
+library(adegraphics)
+
+library(ggplot2)
+library(RColorBrewer)
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(tidytext)
+
+library(randomForest)
+
+library(here)
+
+read_folder <- here("data/02_processed")
+```
+
+## Read data
+
+```{r}
+df <- readRDS(file.path(read_folder,
+                        "taxo_traits.rds"))
+```
+
+
+## Select data
+
+First step is to select what can be considered as traits. Here, we exclude data relative to taxonomy, intermediate variables (e.g. No_squares, morphological variables related to body size) conservation status and habitat. 
+
+```{r}
+df_relevant <- df |>
+  select(Body_size_PCA,
+         # habitattype,
+         STI, SD, # to update + an aridity index will be added
+         start_main_flight_period,
+         flight_period_length,
+         Coloration_class,
+         voltinism,
+         Perchers_and_fliers,
+         Overwintering_stage,
+         Larval_strategy,
+         Oviposition_substrate)
+# add average latitude + sd
+# dispersion index could be good
+```
+
+```{r}
+# Flight start to factor
+df$start_main_flight_period <- factor(df$start_main_flight_period)
+```
+
+## Fuzzy-coding
+
+```{r}
+df_relevant |> 
+  select(where(is.ordered)) |> 
+  colnames()
+
+df_fuzzy <- df_relevant |>
+  mutate(across(is.ordered, as.numeric))
+```
+
+
+## Remove NAs
+
+```{r}
+# NA
+df_mvar <- na.omit(df_fuzzy)
+```
+
+```{r}
+# Select the rows of the full dataframe present in the analysis
+ind <- na.omit(match(rownames(df_mvar), rownames(df)))
+df_fac <- df[ind, ]
+
+# Recode category and status to exclude level DD
+df_fac$ERL_2024_category <- factor(df_fac$ERL_2024_category,
+                                   levels = unique(df_fac$ERL_2024_category))
+
+df_fac$Conservation <- factor(df_fac$Conservation,
+                              levels = unique(df_fac$Conservation))
+```
+
+## Rename
+
+```{r}
+# Rename columns
+colnames(df_mvar) <- c("body_size",
+                       "tmean", "tsd",
+                       "flight_start", "flight_length",
+                       "color", "voltinism",
+                       "percher", "winter",
+                       "larva_strat", "oviposition")
+```
+
+## Normality check
+
+```{r}
+# # Check normality of numeric columns
+df_num <- df_mvar |>
+  select(where(is.numeric)) |> 
+  pivot_longer(cols = everything())
+
+ggplot(df_num) +
+  facet_wrap(facets = vars(name)) +
+  geom_density(aes(x = value)) +
+  theme_minimal()
+```
+
+## Data summary
+
+```{r}
+summary(df_mvar)
+```
+
+## Simplify habitat
+
+```{r}
+# Create simplified habitat
+
+df_fac$habitat_simple <- as.character(df_fac$habitattype)
+
+df_fac$habitat_simple[df_fac$habitat_simple == "southern Streams and rivers"] <-  "running water"
+df_fac$habitat_simple[df_fac$habitat_simple == "streams and rivers"] <-  "running water"
+
+df_fac$habitat_simple <- factor(df_fac$habitat_simple)
+
+nhab <- length(levels(df_fac$habitat_simple))
+```
+
+
+## Hill-Smith analysis
+
+```{r}
+# Mix (extended Hill-Smith) with ordered factors
+mvar <- dudi.mix(df_mvar, nf = 3,
+                 scannf = FALSE)
+```
+
+```{r}
+ggplot() +
+  geom_col(aes(y = mvar$eig, x = 1:length(mvar$eig)))
+```
+
+```{r}
+s.corcircle(mvar$c1*0.6, 
+            plabels.boxes.draw = FALSE)
+
+corvar <- mvar$cr
+corvar <- data.frame(corvar)
+corvar$variable <- rownames(mvar$cr)
+corvar <- corvar |> 
+  pivot_longer(cols = starts_with("RS"),
+               names_to = "axis",
+               values_to = "correlation")
+
+ggplot(corvar) +
+  facet_wrap(facet = vars(axis), scales = "free_x") +
+  geom_point(aes(x = reorder_within(variable, 
+                                    correlation, 
+                                    axis), 
+                 y = correlation)) +
+  scale_x_reordered() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+s.label(mvar$li,
+        plabels.cex = 0)
+s.label(mvar$li,
+        labels = rownames(df_mvar),
+        plabels.col = "darkgrey",
+        plabels.optim = TRUE)
+```
+
+
+
+```{r}
+# Taxonomic classes
+s.class(mvar$li,
+        fac = df_fac$Suborder,
+        col = c("darkorange", "cornflowerblue"))
+
+nfam <- length(levels(df_fac$Family))
+pal_fam <- colorRampPalette( brewer.pal(8, "Dark2") )(nfam)
+s.class(mvar$li, 
+        fac = df_fac$Family,
+        col = pal_fam)
+
+ngen <- length(levels(df_fac$Genus))
+pal_gen <- colorRampPalette( brewer.pal(8, "Dark2") )(ngen)
+s.class(mvar$li, 
+        fac = df_fac$Genus,
+        plabels.cex = 0.7,
+        col = pal_gen)
+```
+
+
+```{r}
+s.class(mvar$li,
+        fac = df_fac$habitat_simple,
+        col = brewer.pal(nhab, "Dark2"))
+```
+
+```{r}
+col_conservation <- c("darkolivegreen1", "darkorchid4")
+col_redlist <- c("darkolivegreen1", "orange",
+                 "brown3", "darkorchid4")
+col_trend <- c("brown4", "pink", "cornflowerblue")
+
+s.class(mvar$li, 
+        fac = df_fac$Conservation,
+        col = col_conservation)
+s.class(mvar$li, 
+        fac = df_fac$ERL_2024_category,
+        col = col_redlist)
+s.class(mvar$li, 
+        fac = df_fac$Population_trend,
+        col = col_trend)
+```
+
+## Discriminant analysis on conservation status
+
+### Red list category
+
+```{r}
+discri <- discrimin(mvar, 
+                    fac = factor(df_fac$ERL_2024_category),
+                    scannf = FALSE, nf = 3)
+```
+
+
+```{r}
+s.corcircle(discri$va, 
+            plabels.boxes.draw = FALSE)
+# s.corcircle(discri$gc*0.8, 
+#             plabels.col = "darkred", 
+#             plines.col = "darkred", add = TRUE)
+
+corvar <- discri$va # cosines between variables and canonical scores -> Pearson correlation when vectors are centered
+
+corvar <- data.frame(corvar)
+corvar$variable <- rownames(discri$va)
+corvar <- corvar |> 
+  pivot_longer(cols = starts_with("CS"),
+               names_to = "axis",
+               values_to = "correlation")
+
+ggplot(corvar) +
+  facet_wrap(facet = vars(axis), scales = "free_x") +
+  geom_point(aes(x = reorder_within(variable,
+                                    correlation,
+                                    axis),
+                 y = correlation)) +
+  scale_x_reordered() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+s.corcircle(discri$cp[1:3, ])
+```
+
+```{r}
+s.class(discri$li,
+        fac = df_fac$ERL_2024_category,
+        col = col_redlist)
+```
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
+```
+
+
+```{r}
+# s.image(discri$li,
+#         df_fac$AOO_Europe)
+# s.label(discri$li,
+#         plabels.cex = 0,
+#         add = TRUE)
+
+s.class(discri$li,
+        fac = df_fac$habitat_simple,
+        col = brewer.pal(nhab, "Dark2"))
+```
+
+### Trend
+
+```{r}
+discri <- discrimin(mvar, 
+                    fac = factor(df_fac$Population_trend),
+                    scannf = FALSE, nf = 3)
+```
+
+
+```{r}
+s.corcircle(discri$va, 
+            plabels.boxes.draw = FALSE)
+
+corvar <- discri$va # cosines between variables and canonical scores -> Pearson correlation when vectors are centered
+
+corvar <- data.frame(corvar)
+corvar$variable <- rownames(discri$va)
+corvar <- corvar |> 
+  pivot_longer(cols = starts_with("CS"),
+               names_to = "axis",
+               values_to = "correlation")
+
+ggplot(corvar) +
+  facet_wrap(facet = vars(axis), scales = "free_x") +
+  geom_point(aes(x = reorder_within(variable,
+                                    correlation,
+                                    axis),
+                 y = correlation)) +
+  scale_x_reordered() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+s.corcircle(discri$cp[1:3, ])
+```
+
+```{r}
+s.class(discri$li,
+        fac = df_fac$Population_trend,
+        col = col_trend)
+```
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)
+rtest(discri, nrepet = 999)
+```
+
+```{r}
+s.class(discri$li,
+        fac = df_fac$habitat_simple,
+        col = brewer.pal(nhab, "Dark2"))
+```
+
+## lm on AOO
+
+```{r}
+df_lm <- cbind(df_fac |> select(AOO_Europe), df_mvar)
+df_lm <- df_lm |> 
+  rename("AOO" = "AOO_Europe")
+
+lm1 <- lm(AOO ~ body_size + tmean + tsd + flight_start + flight_length + color + voltinism + percher + winter + larva_strat + oviposition,
+          data = df_lm)
+
+summary(lm1)
+anova(lm1)
+```
+## Random forest
+
+### On status
+
+```{r}
+df_status <- cbind(df_fac |> select(ERL_2024_category),
+                   df_mvar)
+df_status <- df_status |> 
+  rename(status = ERL_2024_category)
+
+df_status$status <- factor(df_status$status,
+                           levels = c("LC", "NT", "VU", "EN"),
+                           ordered = TRUE)
+
+rf_status <- randomForest(
+  formula = status ~ .,
+  data = df_status
+  # importance = TRUE,
+)
+
+plot(rf_status)
+
+varImpPlot(rf_status)
+```
+
+### On trend
+
+```{r}
+df_trend <- cbind(df_fac |> select(Population_trend),
+                   df_mvar)
+df_trend <- df_trend |> 
+  rename(trend = Population_trend)
+
+df_trend$trend <- factor(df_trend$trend,
+                         levels = c("Decreasing",
+                                    "Increasing",
+                                    "Stable"),
+                           ordered = TRUE)
+df_trend <- na.omit(df_trend)
+
+rf_trend <- randomForest(
+  formula = trend ~ .,
+  data = df_trend
+)
+
+plot(rf_trend)
+
+varImpPlot(rf_trend)
+```
+
+
+### On area of occurrence
+
+
+```{r}
+df_area <- cbind(df_fac |> select(AOO_Europe),
+                 df_mvar)
+df_area <- df_area |> 
+  rename(area = AOO_Europe)
+
+rf_area <- randomForest(
+  formula = area ~ .,
+  data = df_area,
+  importance = TRUE
+)
+
+plot(rf_area)
+
+sqrt(min(rf_area$mse))
+
+varImpPlot(rf_area)
+
+# df_perm <- data.frame(variable = names(rf_area$importanceSD),
+#                       value = rf_area$importanceSD)
+# ggplot(df_perm) +
+#   geom_point(aes(x = value,
+#                  y = reorder(variable, value)))
+```
+
+```{r}
+rf_status$confusion
+rf_trend$confusion
+
+
+```
+

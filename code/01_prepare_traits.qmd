@@ -7,7 +7,7 @@ toc: true
 toc-depth: 3
 code-fold: true
 params:
-  ordfac: FALSE
+  ordfac: TRUE
 ---
 
 ```{r}
@@ -132,12 +132,18 @@ if (any(df$flight_period_length < 0, na.rm = TRUE)) {
 ```
 
 ```{r}
+# Character to numeric
 df <- df |> 
   mutate(across(ends_with("voltine"),
                 as.numeric))
 
 df <- df |> mutate(across(starts_with("Exuvia"), 
                           as.numeric))
+```
+
+
+```{r}
+# Character to factor
 df <- df |> mutate(across(where(is.character), factor))
 
 df$ERL_2024_category <- factor(df$ERL_2024_category,
@@ -153,6 +159,12 @@ df$Overwintering_stage <- factor(df$Overwintering_stage,
 
 df$Coloration_class <- factor(df$Coloration_class,
                                  levels = c("pale", "intermediate", "dark"), 
+                                 ordered = params$ordfac)
+
+df$Perchers_and_fliers <- factor(df$Perchers_and_fliers,
+                                 levels = c("flier",
+                                            "flier/percher",
+                                            "percher"),
                                  ordered = params$ordfac)
 ```
 
