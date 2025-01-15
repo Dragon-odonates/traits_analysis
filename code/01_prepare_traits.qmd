@@ -139,6 +139,13 @@ df <- df |>
 
 df <- df |> mutate(across(starts_with("Exuvia"), 
                           as.numeric))
+
+df <- df |> mutate(across(starts_with("Body_size"), 
+                          as.numeric))
+df <- df |> mutate(across(starts_with("Abdomen_length"), 
+                          as.numeric))
+df$EOO_EU27 <- as.numeric(df$EOO_EU27)
+df$AOO_EU27 <- as.numeric(df$AOO_EU27)
 ```
 
 
@@ -234,6 +241,25 @@ df_body_size <- df |>
 
 df_body_size <- df_body_size |> 
   relocate(Body_size_PCA, .before = "Body_size_Min")
+```
+
+## Dispersion
+
+```{r}
+# Create dispersion index
+df_body_size <- df_body_size |> 
+  group_by(Species_name) |> 
+  mutate(Hind_wing_Mean = mean(c(Hind_wing_Min, 
+                                 Hind_wing_Max)),
+         .after = Hind_wing_Max) |> 
+  mutate(Body_size_Mean = mean(c(Body_size_Min, 
+                                 Body_size_Max)),
+         .after = Body_size_Max) |> 
+  ungroup()
+
+df_body_size <- df_body_size |> 
+  mutate(dispersion = Hind_wing_Mean/Body_size_Mean,
+         .after = Hind_wing_Mean)
 ```
 
 ## Recode columns

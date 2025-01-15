@@ -21,11 +21,25 @@ library(tidyr)
 library(tidytext)
 
 library(randomForest)
+# install_github('munoztd0/reprtree')
+library(reprtree)
 
 library(here)
 
 read_folder <- here("data/02_processed")
 ```
+
+## Aim
+
+Species traits are thought to influence their answer to various processes, among which their answer to various pressures that make them endangered.
+We know that several odonate species are threatened, but can we generalize this statement from which spp to spp with which characteristics?
+
+These analyses aim at highlighting the links between odonates traits and different markers of their conservation status used by the IUCN. Specifically, we ask:
+
+- is a subset of (possibly correlated) traits correlated to metrics of conservation status? If yes, what are these traits?
+- which traits (if any) can predict the more accurately metrics of conservation status?
+- do different traits affect different conservation status metrics?
+
 
 ## Read data
 
@@ -35,33 +49,84 @@ df <- readRDS(file.path(read_folder,
 ```
 
 
-## Select data
+## Prepare data
+
+### Rename columns
+
+```{r}
+newnames <- c("body_size" = "Body_size_PCA",
+              "habitat" = "habitattype",
+              "tmean" = "STI", 
+              "tsd" = "SD",
+              "flight_start" = "start_main_flight_period",
+              "flight_length" = "flight_period_length",
+              "darkness" = "Coloration_class", 
+              "percher" = "Perchers_and_fliers", 
+              "winter" = "Overwintering_stage",
+              "larva_strat" = "Larval_strategy", 
+              "oviposition" = "Oviposition_substrate",
+              "status" = "ERL_2024_category",
+              "trend" = "Population_trend",
+              "binary_status" = "Conservation",
+              "area" = "AOO_Europe")
+
+df <- df |> 
+  rename(all_of(newnames))
+```
+
+### Recode habitat levels
+
+```{r}
+df$habitat <- as.character(df$habitat)
+
+df$habitat[df$habitat == "temporary waters"] <- "temp_water"
+df$habitat[df$habitat == "southern Streams and rivers"] <- "southern_streams"
+df$habitat[df$habitat == "streams and rivers"] <- "streams"
+
+df$habitat <- factor(df$habitat)
+levels(df$habitat)
+```
+
+
+```{r}
+# Create simplified habitat
+df$habitat_simple <- as.character(df$habitat)
+
+df$habitat_simple[df$habitat_simple == "southern_streams"] <-  "streams"
+
+df$habitat_simple <- factor(df$habitat_simple)
+levels(df$habitat_simple)
+```
+
+### Select data
 
 First step is to select what can be considered as traits. Here, we exclude data relative to taxonomy, intermediate variables (e.g. No_squares, morphological variables related to body size) conservation status and habitat. 
 
 ```{r}
 df_relevant <- df |>
-  select(Body_size_PCA,
-         # habitattype,
-         STI, SD, # to update + an aridity index will be added
-         start_main_flight_period,
-         flight_period_length,
-         Coloration_class,
+  select(body_size,
+         dispersion,
+         habitat,
+         tmean, tsd, # to update + an aridity index will be added
+         flight_start,
+         flight_length,
+         dispersion,
+         darkness,
          voltinism,
-         Perchers_and_fliers,
-         Overwintering_stage,
-         Larval_strategy,
-         Oviposition_substrate)
+         percher,
+         winter,
+         larva_strat,
+         oviposition)
 # add average latitude + sd
 # dispersion index could be good
 ```
 
 ```{r}
 # Flight start to factor
-df$start_main_flight_period <- factor(df$start_main_flight_period)
+# df$flight_start <- factor(df$flight_start)
 ```
 
-## Fuzzy-coding
+### Fuzzy-coding
 
 ```{r}
 df_relevant |> 
@@ -69,16 +134,17 @@ df_relevant |>
   colnames()
 
 df_fuzzy <- df_relevant |>
-  mutate(across(is.ordered, as.numeric))
+  mutate(across(where(is.ordered), as.numeric))
 ```
 
 
-## Remove NAs
+### Remove NAs
 
 ```{r}
 # NA
 df_mvar <- na.omit(df_fuzzy)
 ```
+
 
 ```{r}
 # Select the rows of the full dataframe present in the analysis
@@ -86,26 +152,16 @@ ind <- na.omit(match(rownames(df_mvar), rownames(df)))
 df_fac <- df[ind, ]
 
 # Recode category and status to exclude level DD
-df_fac$ERL_2024_category <- factor(df_fac$ERL_2024_category,
-                                   levels = unique(df_fac$ERL_2024_category))
+df_fac$status <- factor(df_fac$status,
+                        levels = unique(df_fac$status))
 
-df_fac$Conservation <- factor(df_fac$Conservation,
-                              levels = unique(df_fac$Conservation))
+df_fac$binary_status <- factor(df_fac$binary_status,
+                               levels = unique(df_fac$binary_status))
 ```
 
-## Rename
+## Data summary
 
-```{r}
-# Rename columns
-colnames(df_mvar) <- c("body_size",
-                       "tmean", "tsd",
-                       "flight_start", "flight_length",
-                       "color", "voltinism",
-                       "percher", "winter",
-                       "larva_strat", "oviposition")
-```
-
-## Normality check
+### Normality check
 
 ```{r}
 # # Check normality of numeric columns
@@ -114,48 +170,53 @@ df_num <- df_mvar |>
   pivot_longer(cols = everything())
 
 ggplot(df_num) +
-  facet_wrap(facets = vars(name)) +
+  facet_wrap(facets = vars(name), scales = "free") +
   geom_density(aes(x = value)) +
   theme_minimal()
 ```
 
-## Data summary
+```{r}
+# df_mvar_log <- df_mvar |>
+#   mutate(across(where(is.numeric), log))
+# 
+# df_num <- df_mvar_log |>
+#   select(where(is.numeric)) |> 
+#   pivot_longer(cols = everything())
+# 
+# ggplot(df_num) +
+#   facet_wrap(facets = vars(name), scales = "free") +
+#   geom_density(aes(x = value)) +
+#   theme_minimal()
+```
+
+### Data summary
 
 ```{r}
 summary(df_mvar)
 ```
 
-## Simplify habitat
-
-```{r}
-# Create simplified habitat
-
-df_fac$habitat_simple <- as.character(df_fac$habitattype)
-
-df_fac$habitat_simple[df_fac$habitat_simple == "southern Streams and rivers"] <-  "running water"
-df_fac$habitat_simple[df_fac$habitat_simple == "streams and rivers"] <-  "running water"
-
-df_fac$habitat_simple <- factor(df_fac$habitat_simple)
-
-nhab <- length(levels(df_fac$habitat_simple))
-```
-
-
 ## Hill-Smith analysis
+
+This first analysis is very exploratory, and aims at describing the main axes of variation of species traits.
 
 ```{r}
 # Mix (extended Hill-Smith) with ordered factors
-mvar <- dudi.mix(df_mvar, nf = 3,
-                 scannf = FALSE)
+mvar <- dudi.hillsmith(df_mvar, nf = 2,
+                       scannf = FALSE)
 ```
 
 ```{r}
 ggplot() +
-  geom_col(aes(y = mvar$eig, x = 1:length(mvar$eig)))
+  geom_col(aes(y = mvar$eig/sum(mvar$eig), 
+               x = 1:length(mvar$eig)))
 ```
 
+These graphs summarize the relationship between traits and axes of variation. The first axis is driven by voltinism, perching behavior, body size and length of the flight period. 
+
+The second axis is driven by habitat, larval strategy and mean temperature.
+
 ```{r}
-s.corcircle(mvar$c1*0.6, 
+s.corcircle(mvar$c1, 
             plabels.boxes.draw = FALSE)
 
 corvar <- mvar$cr
@@ -186,7 +247,7 @@ s.label(mvar$li,
         plabels.optim = TRUE)
 ```
 
-
+We examine how the different taxonomic groups map onto trait variation. Here, it seems to be well-related to the traits.
 
 ```{r}
 # Taxonomic classes
@@ -208,47 +269,63 @@ s.class(mvar$li,
         col = pal_gen)
 ```
 
+As habitat is an important variable often used to describe species and also used in conservation, we map habitat categories onto this map.
 
 ```{r}
+col_habitat <- brewer.pal(length(levels(df_fac$habitat)),
+                         "Dark2")
 s.class(mvar$li,
-        fac = df_fac$habitat_simple,
-        col = brewer.pal(nhab, "Dark2"))
+        fac = df_fac$habitat,
+        col = col_habitat)
 ```
+We also look at conservation metrics on this map, even though here the traits axes were chosen to best separate species and not conservation metrics. 
+
 
 ```{r}
-col_conservation <- c("darkolivegreen1", "darkorchid4")
-col_redlist <- c("darkolivegreen1", "orange",
+col_bstatus <- c("darkolivegreen1", "darkorchid4")
+col_status <- c("darkolivegreen1", "orange",
                  "brown3", "darkorchid4")
 col_trend <- c("brown4", "pink", "cornflowerblue")
 
 s.class(mvar$li, 
-        fac = df_fac$Conservation,
-        col = col_conservation)
+        fac = df_fac$binary_status,
+        col = col_bstatus)
 s.class(mvar$li, 
-        fac = df_fac$ERL_2024_category,
-        col = col_redlist)
+        fac = df_fac$status,
+        col = col_status)
 s.class(mvar$li, 
-        fac = df_fac$Population_trend,
+        fac = df_fac$trend,
         col = col_trend)
+s.image(mvar$li,
+        df_fac$area)
 ```
 
 ## Discriminant analysis on conservation status
 
-### Red list category
+### Red list status
 
 ```{r}
+if (any(is.na(df_fac$status))) {
+  warning("Some status are NA")
+}
+# df_mvar2 <- df_mvar |> select(-habitat)
+# mvar2 <- dudi.hillsmith(df_mvar2, scannf = FALSE, nf = 2)
+
 discri <- discrimin(mvar, 
-                    fac = factor(df_fac$ERL_2024_category),
+                    fac = factor(df_fac$status),
                     scannf = FALSE, nf = 3)
 ```
 
+Below is the percentage of variation in trait space that the categories explain.
 
 ```{r}
+sum(discri$eig)/sum(mvar$eig)*100
+```
+It is not much, meaning that conservation status explains a small part of traits variation. It is somewhat expected since traits are not constrained by conservation status.
+
+```{r, fig.width=6, fig.height=6}
 s.corcircle(discri$va, 
             plabels.boxes.draw = FALSE)
-# s.corcircle(discri$gc*0.8, 
-#             plabels.col = "darkred", 
-#             plines.col = "darkred", add = TRUE)
 
 corvar <- discri$va # cosines between variables and canonical scores -> Pearson correlation when vectors are centered
 
@@ -260,7 +337,8 @@ corvar <- corvar |>
                values_to = "correlation")
 
 ggplot(corvar) +
-  facet_wrap(facet = vars(axis), scales = "free_x") +
+  facet_wrap(facet = vars(axis), scales = "free_x", 
+             ncol = 2) +
   geom_point(aes(x = reorder_within(variable,
                                     correlation,
                                     axis),
@@ -269,43 +347,129 @@ ggplot(corvar) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+This graph shows how unconstrained axes are related to constrained axes.
 
 ```{r}
-s.corcircle(discri$cp[1:3, ])
+s.corcircle(discri$cp[1:2, ])
 ```
+
+The categories are not very well separated: however, binary categories are better separated.
 
 ```{r}
 s.class(discri$li,
-        fac = df_fac$ERL_2024_category,
-        col = col_redlist)
+        fac = df_fac$status,
+        col = col_status)
+
+s.class(discri$li,
+        fac = df_fac$binary_status,
+        col = col_bstatus)
 ```
 
 ```{r}
-sum(discri$eig)/sum(mvar$eig)
 rtest(discri, nrepet = 999)
 ```
 
 
 ```{r}
-# s.image(discri$li,
-#         df_fac$AOO_Europe)
-# s.label(discri$li,
-#         plabels.cex = 0,
-#         add = TRUE)
-
 s.class(discri$li,
         fac = df_fac$habitat_simple,
-        col = brewer.pal(nhab, "Dark2"))
+        col = col_habitat)
 ```
+### Binary status
+
+```{r}
+if (any(is.na(df_fac$binary_status))) {
+  warning("Some status are NA")
+}
+
+discri <- discrimin(mvar, 
+                    fac = factor(df_fac$binary_status),
+                    scannf = FALSE, nf = 2)
+```
+
+Below is the percentage of variation in trait space that the categories explain.
+
+```{r}
+sum(discri$eig)/sum(mvar$eig)*100
+```
+
+
+```{r, fig.width=6, fig.height=6}
+s1d.class(score = discri$li, 
+          fac = factor(df_fac$binary_status),
+          col = col_bstatus)
+
+
+corvar <- discri$va # cosines between variables and canonical scores -> Pearson correlation when vectors are centered
+
+corvar <- data.frame(corvar)
+corvar$variable <- rownames(discri$va)
+corvar <- corvar |> 
+  pivot_longer(cols = starts_with("CS"),
+               names_to = "axis",
+               values_to = "correlation")
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(variable,
+                             correlation),
+                 y = correlation)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+For this binary problem, it seems that habitat is important, as well as flight length, and to a lesser extend temperature sd, dispersion, sediment oviposition,  flight start and sprawler larva.
+
+```{r}
+rtest(discri, nrepet = 999)
+```
+
+
+```{r}
+s1d.class(score = discri$li, 
+          fac = df_fac$habitat,
+          col = col_habitat)
+```
+
+
+
 
 ### Trend
 
 ```{r}
-discri <- discrimin(mvar, 
-                    fac = factor(df_fac$Population_trend),
-                    scannf = FALSE, nf = 3)
+# Select subset of non-NA data
+any(is.na(df_fac$trend))
+
+trend_ind <- which(!is.na(df_fac$trend))
+
+df_trend <- df_mvar[trend_ind, ]
+df_fac_trend <- df_fac[trend_ind,]
+
+mvar_trend <- dudi.hillsmith(df_trend,
+                             scannf = FALSE, nf = 2)
 ```
 
+
+```{r}
+discri <- discrimin(mvar_trend, 
+                    fac = df_fac_trend$trend,
+                    scannf = FALSE, nf = 2)
+
+# Also perform analysis with non-filtered data (NAs are kept)
+discri2 <- discrimin(mvar, 
+                    fac = df_fac$trend,
+                    scannf = FALSE, nf = 2)
+```
+
+
+```{r}
+ggplot() +
+  geom_col(aes(y = discri$eig/sum(discri$eig),
+               x = 1:length(discri$eig)))
+```
+
+```{r}
+sum(discri$eig)/sum(mvar_trend$eig)*100
+sum(discri2$eig)/sum(mvar$eig)*100 # it deosn't change much
+```
 
 ```{r}
 s.corcircle(discri$va, 
@@ -331,72 +495,181 @@ ggplot(corvar) +
 ```
 
 
+Here we will concentrate on axis 1. Important variables for trend prediction seem to include habitat, darkness, flight start, flight length, voltinism, tmean, winter and oviposition.
+
+
 ```{r}
-s.corcircle(discri$cp[1:3, ])
+s.corcircle(discri$cp[1:2, ])
 ```
 
 ```{r}
 s.class(discri$li,
-        fac = df_fac$Population_trend,
+        fac = df_fac_trend$trend,
         col = col_trend)
 ```
 
 ```{r}
-sum(discri$eig)/sum(mvar$eig)
 rtest(discri, nrepet = 999)
 ```
 
 ```{r}
 s.class(discri$li,
-        fac = df_fac$habitat_simple,
-        col = brewer.pal(nhab, "Dark2"))
+        fac = df_fac_trend$habitat,
+        col = col_habitat)
 ```
 
-## lm on AOO
+### Redundancy analysis on area
 
 ```{r}
-df_lm <- cbind(df_fac |> select(AOO_Europe), df_mvar)
-df_lm <- df_lm |> 
-  rename("AOO" = "AOO_Europe")
-
-lm1 <- lm(AOO ~ body_size + tmean + tsd + flight_start + flight_length + color + voltinism + percher + winter + larva_strat + oviposition,
-          data = df_lm)
-
-summary(lm1)
-anova(lm1)
+rda <- pcaiv(mvar, df_fac$area, 
+             scannf = FALSE, nf = 1)
 ```
+
+
+```{r}
+rda$eig/sum(mvar$eig)*100
+```
+```{r}
+corvar <- rda$c1
+corvar <- data.frame(corvar)
+corvar$variable <- rownames(rda$c1)
+
+corvar <- corvar |> 
+  pivot_longer(cols = starts_with("CS"),
+               names_to = "axis",
+               values_to = "correlation")
+
+ggplot(corvar) +
+  geom_point(aes(x = reorder(variable,
+                             correlation),
+                 y = correlation)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The most important variables determining the area of occurrence seem t be the habitat, burrower larva, oviposition sediment, and to a lesser extend standard deviation of temperature.
+
+
+```{r}
+cor(rda$li, df_fac$area)
+```
+The response is negatively correlated to the area of occurrence. So eutrophic habitats and standard deviation of temperature are correlated to a bigger area while southern streams, burrowers, sediments ovipositors, temporary waters dwellers, generalist and oligotrophic species are correlated to smaller areas.
+
+
+```{r}
+# df_lm <- cbind(df_fac |> select(AOO_Europe), df_mvar)
+# df_lm <- df_lm |> 
+#   rename("AOO" = "AOO_Europe")
+# 
+# lm1 <- lm(AOO ~ body_size + tmean + tsd + flight_start + flight_length + color + voltinism + percher + winter + larva_strat + oviposition,
+#           data = df_lm)
+# 
+# summary(lm1)
+# anova(lm1)
+```
+
+
 ## Random forest
 
-### On status
+We now address a second question aiming at identifying the most imoortant variables.
+
+### Status
 
 ```{r}
-df_status <- cbind(df_fac |> select(ERL_2024_category),
+# Prepare data for lm
+df_status <- cbind(df_fac |> select(status),
                    df_mvar)
-df_status <- df_status |> 
-  rename(status = ERL_2024_category)
 
+df_status$status <- as.character(df_status$status)
 df_status$status <- factor(df_status$status,
                            levels = c("LC", "NT", "VU", "EN"),
                            ordered = TRUE)
 
+# Look at imbalance
+table(df_status$status)
+```
+
+
+```{r}
+set.seed(42)
+
 rf_status <- randomForest(
   formula = status ~ .,
-  data = df_status
-  # importance = TRUE,
+  data = df_status, 
+  ntree = 5000,
+  strata = df_status$status,
+  sampsize  = c(5, 5, 5, 3)
 )
+
 
 plot(rf_status)
 
 varImpPlot(rf_status)
+
+rf_status$confusion
 ```
 
-### On trend
+The error doesn't decrease much with more trees: this model cannot accurately predict the conservation status, so I won't look further in the details and instead I simplify the problem with a binary classification.
+
+### Binary status
 
 ```{r}
-df_trend <- cbind(df_fac |> select(Population_trend),
+# Prepare data for lm
+df_bstatus <- cbind(df_fac |> select(binary_status),
                    df_mvar)
-df_trend <- df_trend |> 
-  rename(trend = Population_trend)
+
+# Look at imbalance
+table(df_bstatus$binary_status)
+```
+
+```{r}
+set.seed(42)
+
+rf_bstatus <- randomForest(
+  formula = binary_status ~ .,
+  data = df_bstatus,
+  strata = df_bstatus$binary_status,
+  importance = TRUE,
+  sampsize  = c(10, 10),
+  ntree = 5000,
+  keep.forest = TRUE
+)
+
+# rf_bstatus <- randomForest(
+#   x = df_mvar,
+#   y = df_fac$binary_status,
+#   strata = df_bstatus$binary_status,
+#   sampsize  = c(5, 5),
+#   nodesize = 3,
+#   mtry = 13,
+#   ntree = 500,
+#   keep.forest = TRUE
+# )
+
+plot(rf_bstatus)
+
+varImpPlot(rf_bstatus)
+
+rf_bstatus$confusion
+```
+This model performs better. Here, the most important variables to predict binary status are habitat and mean temperature, and to a lesser extent body size, standard deviation of temperature and dispersion abilities.
+
+However, body size and dispersion do not decrease accuracy a lot, which means they are probably correlated to other variables.
+
+
+Let's plot a few trees:
+
+```{r, fig.width=4, fig.height=5}
+reprtree:::plot.getTree(rf_bstatus, k = 1)
+reprtree:::plot.getTree(rf_bstatus, k = 2)
+reprtree:::plot.getTree(rf_bstatus, k = 3)
+```
+
+
+### Trend
+
+```{r}
+df_trend <- cbind(df_fac |> select(trend),
+                   df_mvar)
 
 df_trend$trend <- factor(df_trend$trend,
                          levels = c("Decreasing",
@@ -405,25 +678,48 @@ df_trend$trend <- factor(df_trend$trend,
                            ordered = TRUE)
 df_trend <- na.omit(df_trend)
 
+table(df_trend$trend)
+```
+
+
+```{r}
+set.seed(42)
+
 rf_trend <- randomForest(
   formula = trend ~ .,
-  data = df_trend
+  data = df_trend,
+  localImp = TRUE,
+  ntree = 5000,
+  mtry = 5,
+  strata = df_trend$trend,
+  importance = TRUE,
+  sampsize = c(10, 10, 10)
 )
 
 plot(rf_trend)
 
+importance(rf_trend)
+
 varImpPlot(rf_trend)
+
+rf_trend$confusion
 ```
+
+The more important variables are habitat, mean temperature and to a lesser extent temperature sd, dispersion and body size. They are the same variables as for the protection status.
+However, dispersion and body size are again not important for accuracy which suggests they are correlated to other variables.
+
 
 
 ### On area of occurrence
 
+```{r}
+df_area <- cbind(df_fac |> select(area),
+                 df_mvar)
+```
+
 
 ```{r}
-df_area <- cbind(df_fac |> select(AOO_Europe),
-                 df_mvar)
-df_area <- df_area |> 
-  rename(area = AOO_Europe)
+set.seed(42)
 
 rf_area <- randomForest(
   formula = area ~ .,
@@ -433,21 +729,8 @@ rf_area <- randomForest(
 
 plot(rf_area)
 
-sqrt(min(rf_area$mse))
-
 varImpPlot(rf_area)
-
-# df_perm <- data.frame(variable = names(rf_area$importanceSD),
-#                       value = rf_area$importanceSD)
-# ggplot(df_perm) +
-#   geom_point(aes(x = value,
-#                  y = reorder(variable, value)))
 ```
 
-```{r}
-rf_status$confusion
-rf_trend$confusion
-
-
-```
-
+Here, the standard deviation of temperature seems to be the best predictor of area of occupancy by far, followed by mean temperature and habitat. These variables also improve accuracy so they are not correlated to other variables?
+We could have expected dispersion to play a role too, but it does not seem to be the case.
