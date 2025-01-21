@@ -104,8 +104,8 @@ df <- df |>
          .before = "Family")
 
 # Add Endangered/Least concern
-Conservation_vec <- c(rep("Least Concern", 2), 
-                      rep("Endangered", 3), "Data Deficient")
+Conservation_vec <- c(rep("Non-threatened", 2), 
+                      rep("Threatened", 3), "Data Deficient")
 names(Conservation_vec) <- c("LC", "NT", "VU", "EN", "CR", "DD")
 df <- df |> 
   mutate(Conservation =  unname(Conservation_vec[ERL_2024_category]), 
