@@ -6,6 +6,7 @@ embed-resources: true
 toc: true
 toc-depth: 4
 code-fold: true
+number-sections: true
 ---
 
 ```{r, message=FALSE}
