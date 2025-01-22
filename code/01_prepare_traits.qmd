@@ -91,6 +91,8 @@ df[df == "Not relevant"] <- "NaN"
 df <- df[, grep("_Source", colnames(df), invert = TRUE)]
 ```
 
+### Phylogenetic information
+
 ```{r}
 # Add suborder
 Suborder_vec <- c(rep("Zygoptera", 5), rep("Anisoptera", 7))
@@ -102,7 +104,12 @@ names(Suborder_vec) <- c("Calopterygidae", "Lestidae", "Coenagrionidae",
 df <- df |> 
   mutate(Suborder = unname(Suborder_vec[Family]), 
          .before = "Family")
+```
 
+
+### Status
+
+```{r}
 # Add Endangered/Least concern
 Conservation_vec <- c(rep("Non-threatened", 2), 
                       rep("Threatened", 3), "Data Deficient")
@@ -112,6 +119,9 @@ df <- df |>
          .before = "ERL_2024_category")
 
 ```
+
+
+### Flight
 
 ```{r}
 # Recode flight period
@@ -131,6 +141,8 @@ if (any(df$flight_period_length < 0, na.rm = TRUE)) {
 }
 ```
 
+### Voltinism
+
 ```{r}
 # Character to numeric
 df <- df |> 
@@ -148,6 +160,7 @@ df$EOO_EU27 <- as.numeric(df$EOO_EU27)
 df$AOO_EU27 <- as.numeric(df$AOO_EU27)
 ```
 
+### Data type
 
 ```{r}
 # Character to factor
@@ -174,6 +187,8 @@ df$Perchers_and_fliers <- factor(df$Perchers_and_fliers,
                                             "percher"),
                                  ordered = params$ordfac)
 ```
+
+### Other
 
 ```{r}
 # Short names

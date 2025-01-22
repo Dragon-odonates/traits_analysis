@@ -1,14 +1,14 @@
 ---
-title: "Traits-conservation relationships"
+title: "Relationship between odonates traits and their conservation"
 format: html
 editor: source
 embed-resources: true
 toc: true
-toc-depth: 3
+toc-depth: 4
 code-fold: true
 ---
 
-```{r}
+```{r, message=FALSE}
 library(ade4)
 library(adegraphics)
 
@@ -31,21 +31,69 @@ read_folder <- here("data/02_processed")
 set.seed(42)
 ```
 
+## Summary
+
+In this document, I investigate the link between several indices of odonates' conservation status and their traits. Using two complementary methods, I find that species trends and area of occurrence can be reasonably related to species traits. 
+
+The most important traits are: the habitat (species preferring oligotrophic or southern streams habitats usually have a less favorable status, while eutrophic species usually have a more favorable status) and the preferred temperature (cold-adapted species and species that do not tolerate a large range of temperature usually have a less favorable status, while warm-adapted species that tolerate a large range of temperatures usually have a more favorable status).
+
+The traits related to different conservation metrics often overlap, but some traits affect only specific metrics. In particular, sediment oviposition and flight phenology is related to species trends and binary status (threatened / non-threatened), but not area of occurrence, sediment oviposition is related to binary status and area, and voltinism is related to species trends, but not to other metrics.
+
+
+
 ## Aim
 
 Several odonate species are threatened, and the status of (almost) all European species is known through the red list assessment. 
-Can we extend this taxonomic characterization of threatened species to a functional one, using species traits? In other words, are some groups of species with a defined set of traits more vulnerable than others?
+But beyond the status of each species, is it possible to generalize these results and define some groups of species with a shared set of traits that are more vulnerable than others?
 
-Our working hypothesis is that odonates decline is linked to several drivers (pollution, habitat destruction...), but that the impact of these pressures on a species depends on their characteristics. Without explicitly modelling the link between traits and pressures, maybe the protection status can provide an integrative measures of the intensity of the various pressures affecting odonates, and therefore be linked to their traits.
+Our working hypothesis is that odonates decline is linked to several drivers (pollution, habitat destruction...), but that the impact of these pressures on a species depends on its traits.
 
-These analyses aim at highlighting the links between odonates traits and different markers of their conservation status used by the IUCN. Specifically, we ask:
+Therefore, the protection status of odonates may provide an integrative measures of the intensity of the various pressures that affect them, and therefore be linked to their traits (without explicitly modelling the link between traits and pressures).
+
+## Questions
+
+These analyses aim at highlighting the links between odonates traits and different markers of their conservation status, used in IUCN species assessments. Specifically, we ask:
 
 - is a subset of (possibly correlated) traits correlated to metrics of conservation status? If yes, what are these traits?
-- which traits (if any) can predict the more accurately metrics of conservation status?
 - do different traits affect different conservation status metrics?
+- which traits (if any) can predict the more accurately metrics of conservation status?
+
+## Methods
+
+To answer these question, we test two methods:
+
+- multivariate analyses, either discriminant analyses to predict categorical variables, or redundancy analysis to predict the continuous variable;
+- random forests.
+
+Multivariate analyses allow to quantify the direction of the relationship and to test it, but assume linearly distributed variables and a linear response, whereas random forests don't make any assumption on data distribution or the shape of the relationship, but don't give the direction of the relationship and don't provide a test.
 
 
-## Read data
+## Data
+
+We use a compiled database of odonate species (thanks Geert!), containing various morphological, behavioral and life history traits:
+
+- `body_size`: a synthetic variable (obtained by PCA) summarizing various morphological metrics
+- `habitat`: the preferred habitat of a species
+- `tmean`: mean temperature over the area of distribution of the species
+- `tsd`: standard deviation of temperature over the area of distribution of the species
+- `flight_start`: month the adults start flying (higher = later)
+- `flight_length`: length of the adults flying period (months)
+- `darkness`: species coloration (higher = darker)
+- `voltinism`: species voltinism (number of generations per year: higher values are assocuated to multivoltine species)
+- `percher`: whether the species is more a percher (high values) or a flier
+- `winter`: overwintering status of the species (higher = closer to adult)
+- `larva_strat`: larval strategy
+- `oviposition`: oviposition substrate
+
+We relate these traits to the following 4 measures of conservation:
+
+- `status`: UICN category, as assessed by the 2024 European red list
+- `binary_status`: UICN category, simplified into threatened or non-threatened (more information in @sec-binary)
+- `trend`: trend of the species (population or distribution trend)
+- `area`: area of occupancy of the species (sum of 2x2 km$^2$ squares occupied in Europe)
+
+
+### Read & prepare data
 
 ```{r}
 df <- readRDS(file.path(read_folder,
@@ -53,11 +101,8 @@ df <- readRDS(file.path(read_folder,
 ```
 
 
-## Prepare data
-
-### Rename columns
-
 ```{r}
+# Rename columns
 newnames <- c("body_size" = "Body_size_PCA",
               "habitat" = "habitattype",
               "tmean" = "STI", 
@@ -78,9 +123,9 @@ df <- df |>
   rename(all_of(newnames))
 ```
 
-### Recode habitat levels
 
 ```{r}
+# Recode habitat levels
 df$habitat <- as.character(df$habitat)
 
 df$habitat[df$habitat == "temporary waters"] <- "temp_water"
@@ -88,25 +133,14 @@ df$habitat[df$habitat == "southern Streams and rivers"] <- "southern_streams"
 df$habitat[df$habitat == "streams and rivers"] <- "streams"
 
 df$habitat <- factor(df$habitat)
-levels(df$habitat)
+# levels(df$habitat)
 ```
 
 
-```{r}
-# Create simplified habitat
-df$habitat_simple <- as.character(df$habitat)
-
-df$habitat_simple[df$habitat_simple == "southern_streams"] <-  "streams"
-
-df$habitat_simple <- factor(df$habitat_simple)
-levels(df$habitat_simple)
-```
-
-### Select data
-
-First step is to select what can be considered as traits. Here, we exclude data relative to taxonomy, intermediate variables (e.g. No_squares, morphological variables related to body size) conservation status and habitat. 
+Here, we choose to include as many traits as possible in the analysis, but exclude data relative to taxonomy, intermediate variables encompassed in other measures (e.g. No_squares or morphological variables related to body size) and conservation status (because we want to predict these). 
 
 ```{r}
+# Select data
 df_relevant <- df |>
   select(body_size,
          habitat,
@@ -123,14 +157,10 @@ df_relevant <- df |>
 # add average latitude + sd
 ```
 
-```{r}
-# Flight start to factor
-# df$flight_start <- factor(df$flight_start)
-```
-
-### Fuzzy-coding
+We fuzzy-code the following ordered categorical variables:
 
 ```{r}
+# Fuzzy-coding
 df_relevant |>
   select(where(is.ordered)) |>
   colnames()
@@ -140,10 +170,8 @@ df_fuzzy <- df_relevant |>
 ```
 
 
-### Remove NAs
-
 ```{r}
-# NA
+# Remove NAs
 df_mvar <- na.omit(df_fuzzy)
 ```
 
@@ -161,9 +189,7 @@ df_fac$binary_status <- factor(df_fac$binary_status,
                                levels = unique(df_fac$binary_status))
 ```
 
-## Data summary
-
-### Normality check
+### Data summary
 
 ```{r}
 # Visually inspect normality
@@ -197,11 +223,9 @@ ggplot(df_num) +
   facet_wrap(facets = vars(name), scales = "free") +
   geom_density(aes(x = value)) +
   theme_minimal() +
-  ggtitle("Transformed variables")
+  ggtitle("Some log-transformed variables")
 ```
 
-
-### Data summary
 
 ```{r}
 summary(df_mvar)
@@ -209,16 +233,20 @@ summary(df_mvar)
 
 ## Hill-Smith analysis
 
-This first analysis is very exploratory. Its aim is to describe the main axes of variation of species traits.
+This first analysis is very exploratory, and aims at describing the main axes of variation of species traits (and it is also the first step for the following discriminant analyses). More specifically, we ask:
 
-Also, this analysis is useful for the following analyses.
+- which suite of traits determines the main axes of variation in the odonates functional space?
+- how are these traits correlated?
 
+For that, we perform a Hill-Smith analysis, which is a principal component analysis that allows factor variables.
 
 ```{r}
-# Mix (extended Hill-Smith) with ordered factors
+# Hill-Smith (PCA extended to include factors)
 mvar <- dudi.hillsmith(df_mvar, nf = 2,
                        scannf = FALSE)
 ```
+
+Below are the part of variation explained by the axes:
 
 ```{r}
 ggplot() +
@@ -236,6 +264,7 @@ ggplot() +
 
 For the following, we concentrate on the first two axes which describe `r round(pvar, 2)`% of variation.
 
+The graphs below summarize the relationship between traits and axes of variation:
 
 ```{r}
 s.corcircle(mvar$c1*0.8, 
@@ -256,29 +285,27 @@ ggplot(corvar) +
                                     axis), 
                  y = correlation)) +
   scale_x_reordered() +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-These graphs summarize the relationship between traits and axes of variation. The first axis is driven by voltinism, length of the flight period and perching behavior. It opposes:
+The first axis is driven by voltinism, length of the flight period and perching behavior. It opposes:
 
 - multivoltine, long flight period, percher species (left);
 - to partivoltine, short flight period, flier species (right).
 
-The second axis is driven by habitat and larval strategy, and to a lesser extent mean temperature and oviposition strategy. It opposes:
+The second axis is driven by habitat and larval strategy, and to a lesser extent oviposition and mean temperature. It opposes:
 
-- oligotrophic, temporary water or eutrophic species (i.e. lentic water species) whose larvae are sprawlers or claspers, which live in cold environments and have an endophytic oviposition strategy (top);
-- to (southern) streams and generalist species (lotic water species) with hider and burrower larvae, that live in warm environments and have sediment oviposition strategy (bottom).
-
+- oligotrophic, temporary water or eutrophic species (i.e. lentic water species) whose larvae are sprawlers or claspers, living in cold environments and performing endophytic oviposition (top);
+- to (southern) streams and generalist species (lotic water species) with hider and burrower larvae, living in warm environments and performing sediment oviposition (bottom).
 
 Below are species in the factorial plane.
 
 ```{r}
 s.label(mvar$li,
-        plabels.cex = 0)
-s.label(mvar$li,
         labels = rownames(df_mvar),
         plabels.col = "grey40",
-        plabels.cex = 0.5,
+        plabels.cex = 0.6,
         plabels.optim = TRUE)
 ```
 
@@ -304,12 +331,11 @@ s.class(mvar$li,
         col = pal_gen)
 ```
 
-Here, species position on the multivariate plane seem to be well-related to their family (e.g. see Cordulegastridae in the bottom-right corner), which suggests a phylogenetic signal (that was to be expected).
+Species position on the multivariate plane seem to be well-related to their family (e.g. see Cordulegastridae in the bottom-right corner), which suggests a phylogenetic signal (that was expected).
 
-We can also notice that damselflies (Zygoptera) take up a smaller part of the trait space than dragonflies (Anispotera), which means that they tend to be less functionally diverse.
+We can also notice that damselflies (Zygoptera) take up a smaller part of the trait space than dragonflies (Anispotera), i.e. they tend to be less functionally diverse.
 
-
-We also look at how our 3 conservation metrics (status, trend and area of occurrence) map onto this functional diversity.
+Next, we also look at how our 3 conservation metrics (status, trend and area of occupancy) map onto this functional diversity.
 
 
 ```{r}
@@ -332,7 +358,7 @@ s.class(mvar$li,
         fac = df_fac$trend,
         col = col_trend)
 
-# Area of occurrence
+# Area of occupancy
 s.image(mvar$li,
         df_fac$area)
 ```
@@ -340,15 +366,19 @@ s.image(mvar$li,
 Regarding these conservation metrics:
 
 - it seems that the status is not different for species with different traits, as any part of the trait space can contain threatened or least concern species.
-- there is a weak tendency for increasing species to be located in the bottom left of the space (i.e. multivoltine, long flying species from streams and warm environments). Stable and decreasing species are more spread out.
+- there is a weak tendency for species with an increasing trend to be located in the bottom left of the space (i.e. multivoltine, long flying, percher species from lotic and warm environments). Stable and decreasing species are more spread out.
 - species at the bottom of the plot, i.e. species inhabiting lotic and and warm environments, tend to have the smaller areas of occurrence.
 
-In the analysis above, traits axes were chosen to spread out species as much as possible, and not to distinguish conservation metrics: but the analyses below allow to do just that.
+
+In the analysis above, traits axes were chosen to spread out species as much as possible, and not to distinguish conservation metrics: with the analyses below, we constrain the trait space to best separate the different conservation metrics instead.
 
 
-## Discriminant analysis on conservation status
+## Multivariate analyses
 
 ### Red list status
+
+First, we perform a discriminant analysis of the conservation status of species with their traits. This analysis finds the trait space that best separates the different conservation categories.
+
 
 ```{r}
 if (any(is.na(df_fac$status))) {
@@ -364,10 +394,11 @@ discri <- discrimin(mvar,
 ```{r}
 (perc <- sum(discri$eig)/sum(mvar$eig)*100)
 ```
-Red list status explains `r round(perc, 2)` % of variation in the trait space.
-It is not much, meaning that the variation in traits due to conservation status is only marginal. It is somewhat expected, since traits evolve in response to other variables than the ones affecting conservation status.
 
-More interesting than the explained part of variation: let's see how well traits succeed to separate conservation statuses.
+The red list status explains `r round(perc, 2)` % of variation in the trait space.
+It is not much: the variation in traits that allows to explain conservation status is only marginal. It is somewhat expected, since traits evolve in response to other variables than the ones affecting conservation status.
+
+More interesting than the explained part of variation: let's see how well traits succeed to separate conservation status.
 
 ```{r}
 s.class(discri$li,
@@ -377,21 +408,12 @@ s.class(discri$li,
 
 The categories are rather mixed, with endangered and vulnerable species rather in the bottom-left corner, while nearly threatened species are more in the top-left corner and least concern species take up the right part of the space.
 
-It can be noted that although least concern species are the most numerous, they seem to take less space in the trait space which suggests that least concern species are more similar than nearly threatened, endangered or vulnerable species.
-
-```{r}
-s.class(discri$li,
-        fac = df_fac$binary_status,
-        col = col_bstatus)
-```
-
-If we group the categories into threatened (vulnerable + endangered) and non,-threatened (least concern + nearly threatened), the groups are more distinct (these groups are given by IUCN).
-
 The test below allows to test the significativity of this relationship:
 
 ```{r}
 rtest(discri, nrepet = 999)
 ```
+
 Here, at a risk $\alpha = 5 \%$, we can say that the categories are not significantly discriminated by traits.
 
 
@@ -422,6 +444,7 @@ ggplot(corvar) +
                                     correlation,
                                     axis),
                  y = correlation)) +
+  theme_minimal() +
   scale_x_reordered() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -433,15 +456,15 @@ Axis 1 opposes:
 
 Axis 2 opposes:
 
-- species with sediment oviposition and sprawlere larvae (bottom);
-- to species with claspers or burrowers larvae and endophytic oviposition (top).
+- species with sediment oviposition and sprawler larvae (bottom);
+- to species with claspers or burrowers larvae that are generalist (top).
 
 
 Coming back to the position of each status in the trait space:
 
-- least consern species are generally eutrophic, early and long flight, multivoltine species;
-- nearly threatened species tend to have characteristics opposed to those of least concern species and claspers or burrowers larvae and endophytic oviposition;
-- endangered and vulnerable species tend to also have the opposed characteristics to those of least concern species too, but have  sediment oviposition and sprawlere larvae.
+- least concern species are generally eutrophic, early and long flight, multivoltine species;
+- nearly threatened species are generally late and short flight, partivoltine species, claspers or burrowers larvae that are generalist;
+- endangered and vulnerable species are generally late and short flight, partivoltine species, performing sediment oviposition and having sprawler larvae.
 
 The graph below shows how unconstrained axes are related to constrained axes.
 
@@ -458,16 +481,16 @@ The first axis is almost identical in the two analyses (negative correlation), w
 col_habitat <- brewer.pal(length(levels(df_fac$habitat)),
                          "Dark2")
 s.class(discri$li,
-        fac = df_fac$habitat_simple,
+        fac = df_fac$habitat,
         col = col_habitat)
 ```
 
-Finally, the graph above shiws how habitat categories map almost perfectly onto the first axis, and confirms the analysis above saying that oligotrophic species tend to be threatened while eutrophic or generalist species generally do better.
+Finally, the graph above shows how habitat categories map almost perfectly onto the first axis. It also visually confirms that oligotrophic species tend to be threatened, while eutrophic or generalist species generally do better.
 
 
-### Binary status
+### Binary status {#sec-binary}
 
-To go deeper in the analysis above, we re-examine the link between traits and protection status, discriminating only between threatened (VU + EN) and non-threatened (LC + NT) species.
+To go deeper in the analysis above, we re-examine the link between traits and protection status, discriminating only between threatened (VU + EN) and non-threatened (LC + NT) species (NB: these grouped categories are used by IUCN).
 
 ```{r}
 if (any(is.na(df_fac$binary_status))) {
@@ -485,17 +508,18 @@ discri <- discrimin(mvar,
 (perc <- sum(discri$eig)/sum(mvar$eig)*100)
 ```
 
-Red list status explains `r round(perc, 2)` % of variation in the trait space (more than twice less than non-binary status).
+The binary red list status explains `r round(perc, 2)` % of variation in the trait space (it is even less than non-binary status).
 
-Let's test the explanatory power of traits on binary status:
+Let's test the significativity of the relationship between traits on binary status:
 
 ```{r}
 rtest(discri, nrepet = 999)
 ```
-Here, at a risk $\alpha = 5 \%$, we can say that the categories are not significantly discriminated by traits.
+
+Here, at a risk $\alpha = 5 \%$, we can say that the binary categories are not significantly discriminated by traits.
 
 
-We explore the relationship between the only axis and the traits below:
+We explore the relationship between the unique discriminant axis axis and the traits below:
 
 ```{r}
 s1d.class(score = discri$li, 
@@ -505,16 +529,20 @@ s1d.class(score = discri$li,
 
 Non-threatened species generally take up the left, and threatened species the right part of the axis.
 
-One of the threatened species has traits closer to non-threatened species:
+One of the threatened species has traits closer to non-threatened species.
 
 ```{r}
 thr <- which(df_fac$binary_status == "Threatened")
 rownames(discri$li)[which(discri$li == min(discri$li[thr,]))]
-df_fac["A_grandis",]$Species_name
+as.character(df_fac["A_grandis",]$Species_name)
 ```
+
 This is _Aeshna grandis_, a Northern Europe species.
 
-```{r, fig.width=6, fig.height=6}
+
+Let's look at the variables defining this axis:
+
+```{r}
 corvar <- discri$va # cosines between variables and canonical scores -> Pearson correlation when vectors are centered
 
 corvar <- data.frame(corvar)
@@ -528,6 +556,7 @@ ggplot(corvar) +
   geom_point(aes(x = reorder(variable,
                              correlation),
                  y = correlation)) +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
@@ -540,7 +569,7 @@ The discriminant axis opposes:
 
 ### Trend
 
-Let's examine the relationship between traits and estimated population trends now.
+Now, let's examine the relationship between traits and estimated population trends.
 
 ```{r}
 # Select subset of non-NA data
@@ -603,14 +632,15 @@ ggplot(corvar) +
                                     axis),
                  y = correlation)) +
   scale_x_reordered() +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
 Axis 1 opposes:
 
-- multivoltine, light, long and early flight, warm, eutrophic, generalist species overwintering as adults (left);
-- to partivoltine, oligotrophic, dark, short and late flight, cold, southern streams species overwintering as eggs that perform oviposition in sediments (right).
+- multivoltine, light, long and early flight, warm-adapted, eutrophic, generalist species overwintering as adults (left);
+- to partivoltine, oligotrophic, dark, short and late flight, cold-adapted, southern streams species overwintering as eggs that perform oviposition in sediments (right).
 
 Axis 2 opposes:
 
@@ -619,9 +649,9 @@ Axis 2 opposes:
 
 To sum up:
 
-- increasing species tend to be multivoltine, light species, with long and early flight, that are eutrophic ant generalist;
-- stable species tend to be medium voltinism, medium dark, medium temperature species that live in streams;
-- decreasing species tend to be partivoltine, oligotrophic or southern streams, dark, short and late flights species living in cold environments.
+- increasing species tend to be multivoltine, light species, with long and early flight, that are eutrophic and generalist and prefer warm environments;
+- stable species tend to have a medium voltinism, be medium dark, prefer medium temperature and live in streams;
+- decreasing species tend to be partivoltine, live in oligotrophic habitats or southern streams, be dark, short and late flights species and prefer cold environments.
 
 
 ```{r}
@@ -631,9 +661,9 @@ s.corcircle(discri$cp[1:2, ])
 The first discriminant axis is positively correlated to the Hill-Smith first axis and the second discriminant axis is negatively correlated to the Hill-Smith second axis.
 
 
-### Redundancy analysis on area
+### Area of occupancy
 
-For this third analysis, we perform a redundancy analysis because the response variable is continuous. The aim is th relate the area of occurrence (response) to species traits (explanatory variables).
+For this third analysis, we perform a redundancy analysis because the response variable (`area`) is continuous. The aim is to find the best linear combination of species traits (explanatory variables) to explain the area of occupancy (response).
 
 ```{r}
 rda <- pcaiv(mvar, df_fac$area, 
@@ -645,12 +675,14 @@ rda <- pcaiv(mvar, df_fac$area,
 (perc <- rda$eig/sum(mvar$eig)*100)
 ```
 
-Area of occurrence explains `r round(perc, 2)` % of variation in the trait space.
+The area of occupancy explains `r round(perc, 2)` % of variation in the trait space.
 
 ```{r}
 randtest(rda, nrepet = 999)
 ```
+
 This relationship is significant at a risk $\alpha = 5 \%$.
+
 
 ```{r}
 df_plot <- data.frame(ax1 = rda$li$Axis1, area = df_fac$area)
@@ -660,7 +692,7 @@ ggplot(df_plot) +
   theme_minimal()
 ```
 
-The area of occurrence is negatively correlated to axis 1.
+The area of occupancy is negatively correlated to the RDA axis.
 
 
 ```{r}
@@ -677,38 +709,53 @@ ggplot(corvar) +
   geom_point(aes(x = reorder(variable,
                              correlation),
                  y = correlation)) +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 This axis opposes:
 
-- eutrophic species, with a high temperature variability (left = large area of occurrence);
-- to southern streams, temporary water, generalist or oligotrophic species, with burrower larvae that have a sediment oviposition (right = small area of occurrence).
+- eutrophic species that tolerate a large range of temperatures (left = large area of occupancy);
+- to southern streams, temporary water, generalist or oligotrophic species, with burrower larvae that have a sediment oviposition and tolerate a narrow range of temperatures (right = small area of occupancy).
 
-Here, it can be noter that the high temperature variability associated to larger area of occurrence is to be expected, because the bigger the area of occurrence, the larger we expect the variability of temperatures in the area simply by sampling effect.
+The high temperature variability associated to larger area of occupancy is expected, because the bigger the area of occupancy, the larger we expect the variability of temperatures in the area simply by sampling effect.
 
 
 ### Summary of multivariate analyses
 
-Prediction of conservation status bu species traits was not convincing.
+Only species trends and area of occupancy are discriminated by traits at a significant threshold.
+
+However, we still discuss the relationship between traits and binary conservation status below:
+
+- non-threatened species tend to be eutrophic, long and early flight, generalist species adapted to a large range of temperature;
+- threatened species tend to be oligotrophic or southern streams species, performing sediment oviposition, having short and late flight and sprawler larvae adanted to a narrow range of temperatures.
+
 
 Regarding trends:
-- increasing species tend to be multivoltine, light species, with long and early flight, that are eutrophic ant generalist;
+
+- increasing species tend to be multivoltine, light species, with long and early flight, that are eutrophic or generalist and prefer warm environments;
 - decreasing species tend to be partivoltine, oligotrophic or southern streams, dark, short and late flights species living in cold environments.
 
-Regarding area of occurrence:
-- species with a large area of occurrence tend to prefer eutrophic environments and a high temperature variability;
-- species with a small area of occurrence tend to prefer southern streams, temporary water, be generalist or select oligotrophic environments, have burrower larvae and a sediment oviposition.
+Regarding area of occupancy:
 
-The traits determining these two important criteria for conservation are not the same, which can explain that the composite red list status (built upon these two criteria) is not well related to species traits.
-Only some habitats are common between the two criteria, with oligotrophic and southern streams species being both decreasing and having a small area of occurrence.
+- species with a large area of occupancy tend to prefer eutrophic environments and tolerate a large range of temperatures;
+- species with a small area of occupancy tend to prefer southern streams, temporary water, be generalist or select oligotrophic environments, have burrower larvae, perform sediment oviposition and tolerate a narrow range of temperatures.
+
+
+If we group these criteria into favorable conservation status (non-threatened, increasing, large area of occupancy) and unfavorable conservation status (threatened, decreasing, small area of occupancy):
+
+- favorable species tend to be eutrophic (3 criteria), have a long and early flight, be generalist (status + trend), occur in a large range of temperatures (status + area)
+- unfavorable species tend to be oligotrophic or southern streams species (3 criteria) with short and late flights (status + trend) occur in a narrow range of temperatures and perform sediment oviposition (status + area).
 
 
 ## Random forest
 
-We now address a second question aiming at identifying the most important variables for each criterion, using random forests.
+We now explore the link between conservation metrics and traits using random forests.
 
-### Status
+Random forest consists in constructing a large number of decision trees, based on different subsets of features (= species) and predictors (= traits), to predict the status of a response variable (= conservation metric). These trees are then averaged to quantify the importance of each predictor for the response.
+
+
+### Red list status
 
 ```{r}
 # Prepare data for lm
@@ -736,27 +783,39 @@ rf_status <- randomForest(
 )
 ```
 
+Below, we plot a few trees for illustration.
+
+```{r}
+reprtree:::plot.getTree(rf_status, k = 1)
+reprtree:::plot.getTree(rf_status, k = 2)
+reprtree:::plot.getTree(rf_status, k = 3)
+```
+
+
+
+This graph shows the evolution of the error rate (i.e. the proportion of incorrect classes attributions) with the number of trees used for prediction.
 
 ```{r}
 plot(rf_status)
 ```
 
-This graph shows the evolution of the error rate (i.e. the proportion of incorrect classes attributions) with the number of trees used fir prediction.
 
-The error rates for each class are shows in colors, and the error for the out of bag predictions is shown in black. Errors decrease with the number of trees, indicating a good model convergence. However, model performance is mediocre (about 42 % error rate with all trees). The end state visible in this graph is summarized below:
+The error rates for each class are shows in colors, and the error for the out of bag predictions (= subset of the data that was not classified with this tree) is shown in black.
+
+Errors decrease with the number of trees, indicating a good model convergence. However, model performance is mediocre (about 42 % error rate with all trees). This end state is visible in this graph, and also summarized below:
 
 ```{r}
 rf_status
 ```
 
-As this model cannot accurately predict the conservation status, I won't look further in the model interpretation. Instead, I simplify the problem with a binary classification below.
+As this model cannot accurately predict the conservation status, I won't look further in the model interpretation. Instead, I simplify the problem with a binary classification.
 
 ### Binary status
 
 ```{r}
 # Prepare data for lm
 df_bstatus <- cbind(df_fac |> select(binary_status),
-                   df_mvar)
+                    df_mvar)
 
 # Remove factor levels
 df_bstatus$binary_status <- as.character(df_bstatus$binary_status)
@@ -801,7 +860,7 @@ The graph above gives variable importance to explain binary status, quantified w
 
 If we look at the impurity, the most important variables to predict status are mean temperature, habitat, body size and temperature variation. All these variables except body size also decrease accuracy, so they are not correlated to other variables.
 
-To know in which directions these variables affect the status, we look at the plots below:
+To guess in which directions these variables affect the status, we look at the plots below:
 
 ```{r}
 df_boxplots <- df_bstatus |>  
@@ -810,6 +869,7 @@ df_boxplots <- df_bstatus |>
 
 ggplot(df_boxplots) +
   geom_boxplot(aes(x = binary_status, y = value)) +
+  theme_minimal() +
   facet_wrap(vars(name), scales = "free_y")
 
 mosaicplot(table(df_bstatus$binary_status, df_bstatus$habitat),
@@ -817,31 +877,16 @@ mosaicplot(table(df_bstatus$binary_status, df_bstatus$habitat),
 ```
 
 
-Non-threatened species are usually larger, found in habitats with higher and more variable temperature and occur mainly in eutrophic habitats, streams or are generalists.
-
-
-Below, we plot a few trees for illustration.
-
-```{r, fig.width=4, fig.height=5}
-reprtree:::plot.getTree(rf_bstatus, k = 1)
-reprtree:::plot.getTree(rf_bstatus, k = 2)
-reprtree:::plot.getTree(rf_bstatus, k = 3)
-```
+Threatened species are usually smaller, found in habitats with lower and less variable temperature and occur mainly in oligotrophic habitats, southern streams and temporary waters.
 
 
 ### Trend
 
-Next, wa do a random forest on trend.
+Next, we do a random forest on trend.
 
 ```{r}
 df_trend <- cbind(df_fac |> select(trend),
                    df_mvar)
-
-df_trend$trend <- factor(df_trend$trend,
-                         levels = c("Decreasing",
-                                    "Stable", 
-                                    "Increasing"),
-                           ordered = TRUE)
 df_trend <- na.omit(df_trend)
 
 table(df_trend$trend)
@@ -890,15 +935,17 @@ df_boxplots <- df_trend |>
 ggplot(df_boxplots) +
   geom_boxplot(aes(x = trend, y = value)) +
   facet_wrap(vars(name), scales = "free_y") +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 mosaicplot(table(df_trend$trend, df_trend$habitat),
            shade = TRUE, las = 1)
 ```
 
-Decreasing species tend to be smaller, occur in colder and less variable in temperature habitats. They also tend to occur more in oligotrophic habitats and less in eutrophic habitats, while increasing species tend to be generalists.
+Decreasing species tend to be smaller, occur in colder and less variable in temperature habitats. They also tend to occur more in oligotrophic habitats and southern streams and less in eutrophic habitats, while increasing species tend to be eutrophic, generalist or temporary water species.
 
-### On area of occurrence
+
+### Area of occupancy
 
 ```{r}
 df_area <- cbind(df_fac |> select(area),
@@ -907,18 +954,141 @@ df_area <- cbind(df_fac |> select(area),
 
 
 ```{r}
-set.seed(42)
-
 rf_area <- randomForest(
   formula = area ~ .,
   data = df_area,
-  importance = TRUE
+  importance = TRUE,
+  ntree = 500
 )
+```
 
+
+```{r}
 plot(rf_area)
+```
 
+With this model, the error metric is different as we use mean square error (MSE) to measure error (since we predict a quantitative variable). The MSE decreases with the number of trees.
+
+
+```{r}
+rf_area
+```
+
+This model explains about 50 % of variance of area of occupancy by traits.
+
+
+```{r}
 varImpPlot(rf_area)
 ```
 
-Here, the standard deviation of temperature seems to be the best predictor of area of occupancy by far, followed by mean temperature and habitat. These variables also improve accuracy so they are not correlated to other variables?
-We could have expected dispersion to play a role too, but it does not seem to be the case.
+The metrics measuring variable importance are also different from the previous random forest models here, as the predicted variable (area of occupancy) is quantitative, but their interpretation is the same.
+
+- the left graph quantifies the increase in Mean Square Error (MSE) when the variable is permuted. As previously, it indicates if the predictor is redundant.
+- the right graph quantifies the increase in node purity, i.e. the the residual sum of squares explained by a node split using this predictor.
+
+Based on these metrics, the most important traits to determine species area of occupancy are temperature variability and mean and habitat (right graph). These variables also rank first in the increase of MSE (left graph), which indicates that they are not redundant with other variables.
+
+
+To guess the direction of the effect, let's look at these graphs:
+
+
+```{r}
+df_points <- df_area |>  
+  select(area, tmean, tsd) |> 
+  pivot_longer(cols = c(tmean, tsd))
+
+ggplot(df_points,
+       aes(x = area, y = value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  facet_wrap(vars(name), scales = "free_y")
+
+ggplot(df_area) +
+  geom_boxplot(aes(y = habitat, 
+                   x = area)) +
+  theme_minimal() +
+  geom_vline(xintercept = mean(df_area$area),
+             linetype = "dashed")
+```
+
+Species with a smaller area of occupancy tend to live in warmer places with less temperature variability, and are often southern streams or oligotrophic species.
+
+### Summary of random forest analyses
+
+The analyses on binary status, trend and area of occupancy are in agreement to define the most important traits for these conservation indicators, which are:
+
+- habitat
+- mean temperature
+- standard deviation of temperature
+
+Strictly, random forests don't allow to estimate the direction of the effect. However, we can guess by examining the relationship between predictors and response variable in the dataset. Following this guess, almost all analyses find the same direction of the effect of these traits on conservation metrics. Indeed, threatened species, decreasing species and species occurring in small areas tend to:
+
+- live in places that have less variable temperatures;
+- prefer oligotrophic and southern streams habitats.
+
+The picture for mean temperature is a little different, as:
+
+- decreasing and threatened species live in colder places;
+- species occurring in small areas live in warmer places.
+
+
+## Methods comparison
+
+Below, we compare the results obtained with multivariate analyses or random forest for each conservation metric.
+
+
+### Binary status
+
+For binary status, discriminant analysis defines:
+
+- non-threatened species as eutrophic, long and early flight, generalist species with a large temperature range;
+- threatened species as oligotrophic, southern streams, sediment oviposition, short and late flight, sprawler larvae.
+
+
+Random forest cannot directly determine the direction of the relationship. However, with a visual examination of data, it gives:
+
+- non-threatened species as found in habitats with higher and more variable temperature that occur mainly in eutrophic, generalist or streams habitats;
+- threatened species as found in habitats with lower and less variable temperature and occur mainly in oligotrophic habitats, southern streams and temporary waters.
+
+Both methods are in agreement to select habitat and temperature range as important variables, and the direction of the effect seems to be similar. However, mean temperature doesn't appear in the multivariate analysis, and flight, larvae strategies and oviposition don't appear in the random forest.
+
+### Trends
+
+For the discriminant analysis: 
+
+- increasing species tend to be multivoltine, light species, with long and early flight, that are eutrophic and generalist that prefer warm environments;
+- decreasing species tend to be partivoltine, live in oligotrophic habitats or southern streams, be dark, short and late flights species and prefer cold environments.
+
+For random forest:
+
+- increasing species tend to occur in warmer and more variable in temperature habitats, occur more in eutrophic, generalist or temporary water habitats.
+- decreasing species tend to occur in colder and less variable in temperature habitats, occur more in oligotrophic habitats and southern streams
+
+
+Both methods are in agreement for the habitat and mean temperature, but temperature variability doesn't appear in the multivariate analysis, and darkness, flight and voltinism don't appear in the random forest.
+
+
+### Area of occupancy
+
+For the redundancy analysis:
+
+- large area species tend to be eutrophic species that tolerate a high temperature range;
+- small area of occupancy species tend to be in southern streams, temporary water, generalist or oligotrophic species, with burrower larvae that have a sediment oviposition and tolerate a narrow temperatire range.
+
+For the random forest:
+
+- large area species tend to live in colder places with more temperature variability and be eutrophic or streams species;
+- smaller area species tend to live in warmer places with less temperature variability, and are often southern streams or oligotrophic species.
+
+Both methods agree for habitat and temperature variability, but mean temperature doesn't appear in RDA and larval stragegy and oviposition don't appear in random forest.
+
+
+## Summary of the results
+
+In this document, I used two different methods to study the relationship between traits and species conservation status, evaluated with 4 metrics (status, binary status, trend and area).
+
+All analyses converge to point habitat as an important factor for species conservation, with an opposition between eutrophic species (that tend to have a favorable status), and oligotrophic species (and sometimes also southern streams species) that tend to have a less favorable status.
+
+Some analyses agree that temperature mean and variability are also important factors, with species living in colder and less variable environments having a generally less favorable status. In particular, mean temperature is found to affect species trends with both methods, while temperature range affects species' binary status and area of occupancy for both methods.
+Finally, multivariate analysis also point the role of generalist species and flight phenology (status + trend), sediment oviposition (status + area) and voltinism (trends).

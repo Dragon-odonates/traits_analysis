@@ -3086,8 +3086,17 @@ vertical-align: -.125em;
   <ul>
   <li><a href="#read-data" id="toc-read-data" class="nav-link active" data-scroll-target="#read-data">Read data</a></li>
   <li><a href="#merge-data" id="toc-merge-data" class="nav-link" data-scroll-target="#merge-data">Merge data</a></li>
-  <li><a href="#format-data" id="toc-format-data" class="nav-link" data-scroll-target="#format-data">Format data</a></li>
+  <li><a href="#format-data" id="toc-format-data" class="nav-link" data-scroll-target="#format-data">Format data</a>
+  <ul class="collapse">
+  <li><a href="#phylogenetic-information" id="toc-phylogenetic-information" class="nav-link" data-scroll-target="#phylogenetic-information">Phylogenetic information</a></li>
+  <li><a href="#status" id="toc-status" class="nav-link" data-scroll-target="#status">Status</a></li>
+  <li><a href="#flight" id="toc-flight" class="nav-link" data-scroll-target="#flight">Flight</a></li>
+  <li><a href="#voltinism" id="toc-voltinism" class="nav-link" data-scroll-target="#voltinism">Voltinism</a></li>
+  <li><a href="#data-type" id="toc-data-type" class="nav-link" data-scroll-target="#data-type">Data type</a></li>
+  <li><a href="#other" id="toc-other" class="nav-link" data-scroll-target="#other">Other</a></li>
+  </ul></li>
   <li><a href="#body-size-multivariate-analysis" id="toc-body-size-multivariate-analysis" class="nav-link" data-scroll-target="#body-size-multivariate-analysis">Body size multivariate analysis</a></li>
+  <li><a href="#dispersion" id="toc-dispersion" class="nav-link" data-scroll-target="#dispersion">Dispersion</a></li>
   <li><a href="#recode-columns" id="toc-recode-columns" class="nav-link" data-scroll-target="#recode-columns">Recode columns</a></li>
   </ul>
 </nav>
@@ -3272,6 +3281,8 @@ New names:
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df[, <span class="fu">grep</span>(<span class="st">&quot;_Source&quot;</span>, <span class="fu">colnames</span>(df), <span class="at">invert =</span> <span class="cn">TRUE</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+<section id="phylogenetic-information" class="level3">
+<h3 class="anchored" data-anchor-id="phylogenetic-information">Phylogenetic information</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3284,125 +3295,161 @@ New names:
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Suborder =</span> <span class="fu">unname</span>(Suborder_vec[Family]), </span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;Family&quot;</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Add Endangered/Least concern</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>Conservation_vec <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;Least Concern&quot;</span>, <span class="dv">2</span>), </span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">rep</span>(<span class="st">&quot;Endangered&quot;</span>, <span class="dv">3</span>), <span class="st">&quot;Data Deficient&quot;</span>)</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(Conservation_vec) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;LC&quot;</span>, <span class="st">&quot;NT&quot;</span>, <span class="st">&quot;VU&quot;</span>, <span class="st">&quot;EN&quot;</span>, <span class="st">&quot;CR&quot;</span>, <span class="st">&quot;DD&quot;</span>)</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Conservation =</span>  <span class="fu">unname</span>(Conservation_vec[ERL_2024_category]), </span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;ERL_2024_category&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;Family&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="status" class="level3">
+<h3 class="anchored" data-anchor-id="status">Status</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add Endangered/Least concern</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>Conservation_vec <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;Non-threatened&quot;</span>, <span class="dv">2</span>), </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">rep</span>(<span class="st">&quot;Threatened&quot;</span>, <span class="dv">3</span>), <span class="st">&quot;Data Deficient&quot;</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(Conservation_vec) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;LC&quot;</span>, <span class="st">&quot;NT&quot;</span>, <span class="st">&quot;VU&quot;</span>, <span class="st">&quot;EN&quot;</span>, <span class="st">&quot;CR&quot;</span>, <span class="st">&quot;DD&quot;</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Conservation =</span>  <span class="fu">unname</span>(Conservation_vec[ERL_2024_category]), </span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;ERL_2024_category&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="flight" class="level3">
+<h3 class="anchored" data-anchor-id="flight">Flight</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Recode flight period</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>start_months <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(start_months) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;January&quot;</span>, <span class="st">&quot;February&quot;</span>, <span class="st">&quot;March&quot;</span>, <span class="st">&quot;April&quot;</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;May&quot;</span>, <span class="st">&quot;June&quot;</span>, <span class="st">&quot;July&quot;</span>, <span class="st">&quot;August&quot;</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;September&quot;</span>, <span class="st">&quot;October&quot;</span>, <span class="st">&quot;November&quot;</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;December&quot;</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">start_main_flight_period =</span> <span class="fu">unname</span>(start_months[start_main_flight_period])) <span class="sc">|&gt;</span> </span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">end_main_flight_period =</span> <span class="fu">unname</span>(start_months[end_main_flight_period])) <span class="sc">|&gt;</span> </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">flight_period_length =</span> <span class="fu">unname</span>(end_main_flight_period <span class="sc">-</span> start_main_flight_period <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(df<span class="sc">$</span>flight_period_length <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;Flight length &lt; 0 for some species&quot;</span>)</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="voltinism" class="level3">
+<h3 class="anchored" data-anchor-id="voltinism">Voltinism</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Character to numeric</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">&quot;voltine&quot;</span>),</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                as.numeric))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;Exuvia&quot;</span>), </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>                          as.numeric))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;Body_size&quot;</span>), </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                          as.numeric))</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;Abdomen_length&quot;</span>), </span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>                          as.numeric))</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>EOO_EU27 <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(df<span class="sc">$</span>EOO_EU27)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduits lors de la conversion automatique</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>AOO_EU27 <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(df<span class="sc">$</span>AOO_EU27)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduits lors de la conversion automatique</code></pre>
+</div>
+</div>
+</section>
+<section id="data-type" class="level3">
+<h3 class="anchored" data-anchor-id="data-type">Data type</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Character to factor</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.character), factor))</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>ERL_2024_category <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>ERL_2024_category,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                               <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;LC&quot;</span>, <span class="st">&quot;NT&quot;</span>, <span class="st">&quot;VU&quot;</span>, <span class="st">&quot;EN&quot;</span>, <span class="st">&quot;CR&quot;</span>, <span class="st">&quot;DD&quot;</span>))</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Population_trend <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Population_trend,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                              <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Decreasing&quot;</span>, <span class="st">&quot;Stable&quot;</span>, <span class="st">&quot;Increasing&quot;</span>), </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                              <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Overwintering_stage <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Overwintering_stage,</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;egg&quot;</span>, <span class="st">&quot;egg/larva&quot;</span>, <span class="st">&quot;larva&quot;</span>, <span class="st">&quot;adult&quot;</span>), </span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Coloration_class <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Coloration_class,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;pale&quot;</span>, <span class="st">&quot;intermediate&quot;</span>, <span class="st">&quot;dark&quot;</span>), </span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Perchers_and_fliers <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Perchers_and_fliers,</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;flier&quot;</span>,</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>                                            <span class="st">&quot;flier/percher&quot;</span>,</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>                                            <span class="st">&quot;percher&quot;</span>),</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="other" class="level3">
+<h3 class="anchored" data-anchor-id="other">Other</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Short names</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>short_names <span class="ot">&lt;-</span> <span class="fu">str_remove</span>(df<span class="sc">$</span>Species_name, <span class="st">&quot;(?&lt;=^[A-Z])[a-z]*&quot;</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>short_names <span class="ot">&lt;-</span> <span class="fu">str_replace_all</span>(short_names, <span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">short_names =</span> short_names, </span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Recode flight period</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>start_months <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(start_months) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;January&quot;</span>, <span class="st">&quot;February&quot;</span>, <span class="st">&quot;March&quot;</span>, <span class="st">&quot;April&quot;</span>,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;May&quot;</span>, <span class="st">&quot;June&quot;</span>, <span class="st">&quot;July&quot;</span>, <span class="st">&quot;August&quot;</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;September&quot;</span>, <span class="st">&quot;October&quot;</span>, <span class="st">&quot;November&quot;</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;December&quot;</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">start_main_flight_period =</span> <span class="fu">unname</span>(start_months[start_main_flight_period])) <span class="sc">|&gt;</span> </span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">end_main_flight_period =</span> <span class="fu">unname</span>(start_months[end_main_flight_period])) <span class="sc">|&gt;</span> </span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">flight_period_length =</span> <span class="fu">unname</span>(end_main_flight_period <span class="sc">-</span> start_main_flight_period <span class="sc">+</span> <span class="dv">1</span>))</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(df<span class="sc">$</span>flight_period_length <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;Flight length &lt; 0 for some species&quot;</span>)</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Issue with voltinism values</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># df |&gt; select(ends_with(&quot;voltine&quot;)) |&gt; filter(Partivoltine &gt; 1)</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># df |&gt; select(ends_with(&quot;voltine&quot;)) |&gt; filter(Bivoltine &gt;1)</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Partivoltine[df<span class="sc">$</span>Partivoltine <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(df<span class="sc">$</span>Partivoltine)] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Bivoltine[df<span class="sc">$</span>Bivoltine <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(df<span class="sc">$</span>Bivoltine)] <span class="ot">&lt;-</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Character to numeric</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">&quot;voltine&quot;</span>),</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                as.numeric))</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;Exuvia&quot;</span>), </span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>                          as.numeric))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Character to factor</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.character), factor))</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>ERL_2024_category <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>ERL_2024_category,</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>                               <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;LC&quot;</span>, <span class="st">&quot;NT&quot;</span>, <span class="st">&quot;VU&quot;</span>, <span class="st">&quot;EN&quot;</span>, <span class="st">&quot;CR&quot;</span>, <span class="st">&quot;DD&quot;</span>))</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Population_trend <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Population_trend,</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>                              <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Decreasing&quot;</span>, <span class="st">&quot;Stable&quot;</span>, <span class="st">&quot;Increasing&quot;</span>), </span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                              <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Overwintering_stage <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Overwintering_stage,</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;egg&quot;</span>, <span class="st">&quot;egg/larva&quot;</span>, <span class="st">&quot;larva&quot;</span>, <span class="st">&quot;adult&quot;</span>), </span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Coloration_class <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Coloration_class,</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;pale&quot;</span>, <span class="st">&quot;intermediate&quot;</span>, <span class="st">&quot;dark&quot;</span>), </span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Perchers_and_fliers <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>Perchers_and_fliers,</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;flier&quot;</span>,</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>                                            <span class="st">&quot;flier/percher&quot;</span>,</span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>                                            <span class="st">&quot;percher&quot;</span>),</span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Short names</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>short_names <span class="ot">&lt;-</span> <span class="fu">str_remove</span>(df<span class="sc">$</span>Species_name, <span class="st">&quot;(?&lt;=^[A-Z])[a-z]*&quot;</span>)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>short_names <span class="ot">&lt;-</span> <span class="fu">str_replace_all</span>(short_names, <span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>)</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">short_names =</span> short_names, </span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Issue with voltinism values</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># df |&gt; select(ends_with(&quot;voltine&quot;)) |&gt; filter(Partivoltine &gt; 1)</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># df |&gt; select(ends_with(&quot;voltine&quot;)) |&gt; filter(Bivoltine &gt;1)</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Partivoltine[df<span class="sc">$</span>Partivoltine <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(df<span class="sc">$</span>Partivoltine)] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>Bivoltine[df<span class="sc">$</span>Bivoltine <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(df<span class="sc">$</span>Bivoltine)] <span class="ot">&lt;-</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
+</section>
 </section>
 <section id="body-size-multivariate-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="body-size-multivariate-analysis">Body size multivariate analysis</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df_size <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Body_size_Min, Body_size_Max, </span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>         Abdomen_length_Min, Abdomen_length_Max,</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>         Hind_wing_Min, Hind_wing_Max,</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>         Exuvia_Tot_length_Min, Exuvia_Tot_length_Max)</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Numeric</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>df_size <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">apply</span>(df_size, <span class="dv">2</span>, as.numeric))</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(df_size) <span class="ot">&lt;-</span> df<span class="sc">$</span>short_names</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co"># NA</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>df_size_mvar <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(df_size)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df_size <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Body_size_Min, Body_size_Max, </span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>         Abdomen_length_Min, Abdomen_length_Max,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>         Hind_wing_Min, Hind_wing_Max,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>         Exuvia_Tot_length_Min, Exuvia_Tot_length_Max)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Numeric</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>df_size <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">apply</span>(df_size, <span class="dv">2</span>, as.numeric))</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(df_size) <span class="ot">&lt;-</span> df<span class="sc">$</span>short_names</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="co"># NA</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>df_size_mvar <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(df_size)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pca_size <span class="ot">&lt;-</span> <span class="fu">dudi.pca</span>(df_size_mvar, <span class="at">scannf =</span> <span class="cn">FALSE</span>, <span class="at">nf =</span> <span class="dv">3</span>)</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(pca_size<span class="sc">$</span>c1, <span class="at">plabels.boxes.draw =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>pca_size <span class="ot">&lt;-</span> <span class="fu">dudi.pca</span>(df_size_mvar, <span class="at">scannf =</span> <span class="cn">FALSE</span>, <span class="at">nf =</span> <span class="dv">3</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(pca_size<span class="sc">$</span>c1, <span class="at">plabels.boxes.draw =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -3413,7 +3460,7 @@ New names:
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(pca_size<span class="sc">$</span>li)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(pca_size<span class="sc">$</span>li)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -3426,7 +3473,7 @@ New names:
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>pca_size<span class="sc">$</span>eig<span class="sc">/</span><span class="fu">sum</span>(pca_size<span class="sc">$</span>eig) <span class="co"># First axis explains 91 %</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pca_size<span class="sc">$</span>eig<span class="sc">/</span><span class="fu">sum</span>(pca_size<span class="sc">$</span>eig) <span class="co"># First axis explains 91 %</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.911336252 0.051576018 0.020763449 0.006657615 0.003775272 0.002781774
@@ -3436,25 +3483,47 @@ New names:
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>body_size <span class="ot">&lt;-</span> <span class="sc">-</span>pca_size<span class="sc">$</span>li[, <span class="dv">1</span>] <span class="co"># invert axes so that bigger scores correspond to larger odonates</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Select species subset for which size is available</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>ind_sp_not_na <span class="ot">&lt;-</span> <span class="fu">match</span>(<span class="fu">rownames</span>(df_size_mvar), df<span class="sc">$</span>short_names)</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>sp_not_na <span class="ot">&lt;-</span> df<span class="sc">$</span>Species_name[ind_sp_not_na]</span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>size_names_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Species_name =</span> sp_not_na,</span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Body_size_PCA =</span> body_size)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>body_size <span class="ot">&lt;-</span> <span class="sc">-</span>pca_size<span class="sc">$</span>li[, <span class="dv">1</span>] <span class="co"># invert axes so that bigger scores correspond to larger odonates</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Select species subset for which size is available</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>ind_sp_not_na <span class="ot">&lt;-</span> <span class="fu">match</span>(<span class="fu">rownames</span>(df_size_mvar), df<span class="sc">$</span>short_names)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>sp_not_na <span class="ot">&lt;-</span> df<span class="sc">$</span>Species_name[ind_sp_not_na]</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>size_names_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Species_name =</span> sp_not_na,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Body_size_PCA =</span> body_size)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add body size to df</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(size_names_df, <span class="at">by =</span> <span class="st">&quot;Species_name&quot;</span>) </span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df_body_size <span class="sc">|&gt;</span> </span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Body_size_PCA, <span class="at">.before =</span> <span class="st">&quot;Body_size_Min&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add body size to df</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(size_names_df, <span class="at">by =</span> <span class="st">&quot;Species_name&quot;</span>) </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df_body_size <span class="sc">|&gt;</span> </span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Body_size_PCA, <span class="at">.before =</span> <span class="st">&quot;Body_size_Min&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="dispersion" class="level2">
+<h2 class="anchored" data-anchor-id="dispersion">Dispersion</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create dispersion index</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df_body_size <span class="sc">|&gt;</span> </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Species_name) <span class="sc">|&gt;</span> </span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Hind_wing_Mean =</span> <span class="fu">mean</span>(<span class="fu">c</span>(Hind_wing_Min, </span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>                                 Hind_wing_Max)),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">.after =</span> Hind_wing_Max) <span class="sc">|&gt;</span> </span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Body_size_Mean =</span> <span class="fu">mean</span>(<span class="fu">c</span>(Body_size_Min, </span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>                                 Body_size_Max)),</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">.after =</span> Body_size_Max) <span class="sc">|&gt;</span> </span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>df_body_size <span class="ot">&lt;-</span> df_body_size <span class="sc">|&gt;</span> </span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dispersion =</span> Hind_wing_Mean<span class="sc">/</span>Body_size_Mean,</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">.after =</span> Hind_wing_Mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3463,30 +3532,30 @@ New names:
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Recode voltinism</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_body_size</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Partivoltine[df_recode<span class="sc">$</span>Partivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Partivoltine&quot;</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Semivoltine[df_recode<span class="sc">$</span>Semivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Semivoltine&quot;</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Univoltine[df_recode<span class="sc">$</span>Univoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Univoltine&quot;</span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Bivoltine[df_recode<span class="sc">$</span>Bivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bivoltine&quot;</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_recode <span class="sc">|&gt;</span> </span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">voltinism =</span> <span class="fu">paste</span>(Partivoltine,</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>                           Semivoltine,</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>                           Univoltine,</span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>                           Bivoltine, <span class="at">sep =</span> <span class="st">&quot;-&quot;</span>),</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;Partivoltine&quot;</span>)</span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove zeroes</span></span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">str_remove_all</span>(df_recode<span class="sc">$</span>voltinism, <span class="st">&quot;-*0-*&quot;</span>)</span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplification</span></span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">str_remove_all</span>(df_recode<span class="sc">$</span>voltinism, <span class="st">&quot;-*NA-*&quot;</span>)</span>
-<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="co"># NA recoding</span></span>
-<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism[df_recode<span class="sc">$</span>voltinism <span class="sc">==</span> <span class="st">&quot;&quot;</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(df_recode<span class="sc">$</span>voltinism)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Recode voltinism</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_body_size</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Partivoltine[df_recode<span class="sc">$</span>Partivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Partivoltine&quot;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Semivoltine[df_recode<span class="sc">$</span>Semivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Semivoltine&quot;</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Univoltine[df_recode<span class="sc">$</span>Univoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Univoltine&quot;</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>Bivoltine[df_recode<span class="sc">$</span>Bivoltine <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bivoltine&quot;</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_recode <span class="sc">|&gt;</span> </span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">voltinism =</span> <span class="fu">paste</span>(Partivoltine,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>                           Semivoltine,</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>                           Univoltine,</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>                           Bivoltine, <span class="at">sep =</span> <span class="st">&quot;-&quot;</span>),</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="st">&quot;Partivoltine&quot;</span>)</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove zeroes</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">str_remove_all</span>(df_recode<span class="sc">$</span>voltinism, <span class="st">&quot;-*0-*&quot;</span>)</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplification</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">str_remove_all</span>(df_recode<span class="sc">$</span>voltinism, <span class="st">&quot;-*NA-*&quot;</span>)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a><span class="co"># NA recoding</span></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism[df_recode<span class="sc">$</span>voltinism <span class="sc">==</span> <span class="st">&quot;&quot;</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(df_recode<span class="sc">$</span>voltinism)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1] &quot;Univoltine&quot;                          &quot;Partivoltine&quot;                       
@@ -3497,48 +3566,48 @@ New names:
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">factor</span>(df_recode<span class="sc">$</span>voltinism,</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Partivoltine&quot;</span>,</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Partivoltine-Semivoltine&quot;</span>,</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Partivoltine-Semivoltine-Univoltine&quot;</span>, <span class="co"># not sure</span></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine&quot;</span>,</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine-Univoltine&quot;</span>,</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine-Univoltine-Bivoltine&quot;</span>,</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Univoltine&quot;</span>,</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Univoltine-Bivoltine&quot;</span>,</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Bivoltine&quot;</span>),</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>                            <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>voltinism <span class="ot">&lt;-</span> <span class="fu">factor</span>(df_recode<span class="sc">$</span>voltinism,</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Partivoltine&quot;</span>,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Partivoltine-Semivoltine&quot;</span>,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Partivoltine-Semivoltine-Univoltine&quot;</span>, <span class="co"># not sure</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine&quot;</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine-Univoltine&quot;</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Semivoltine-Univoltine-Bivoltine&quot;</span>,</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Univoltine&quot;</span>,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Univoltine-Bivoltine&quot;</span>,</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">&quot;Bivoltine&quot;</span>),</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>                            <span class="at">ordered =</span> params<span class="sc">$</span>ordfac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># levels(df_recode$habitattype)</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="co"># recode habitat</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>habitat <span class="ot">&lt;-</span> <span class="fu">as.character</span>(df_recode<span class="sc">$</span>habitattype)</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>habitat[habitat <span class="sc">==</span> <span class="st">&quot;Streams and rivers&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;streams and rivers&quot;</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>habitattype <span class="ot">&lt;-</span> <span class="fu">factor</span>(habitat)</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="co"># levels(df_recode$habitattype)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># levels(df_recode$habitattype)</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="co"># recode habitat</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>habitat <span class="ot">&lt;-</span> <span class="fu">as.character</span>(df_recode<span class="sc">$</span>habitattype)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>habitat[habitat <span class="sc">==</span> <span class="st">&quot;Streams and rivers&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;streams and rivers&quot;</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>df_recode<span class="sc">$</span>habitattype <span class="ot">&lt;-</span> <span class="fu">factor</span>(habitat)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="co"># levels(df_recode$habitattype)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Row names</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_recode <span class="sc">|&gt;</span> </span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">&quot;short_names&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Row names</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>df_recode <span class="ot">&lt;-</span> df_recode <span class="sc">|&gt;</span> </span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">&quot;short_names&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(df_recode, </span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">file.path</span>(write_folder, <span class="st">&quot;taxo_traits.csv&quot;</span>),</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(df_recode, </span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">file.path</span>(write_folder, <span class="st">&quot;taxo_traits.rds&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(df_recode, </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">file.path</span>(write_folder, <span class="st">&quot;taxo_traits.csv&quot;</span>),</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(df_recode, </span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">file.path</span>(write_folder, <span class="st">&quot;taxo_traits.rds&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
