@@ -1,1 +1,1 @@
-code/*.html linguist-vendored
+*.html linguist-detectable=false
